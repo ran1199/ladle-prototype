@@ -21,6 +21,7 @@ import {
   MEAL_GROUPS,
   mealGroup,
 } from "@/lib/logic";
+import { clearPlate, getPlate } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
 import type { LogEntry, Recipe } from "@/lib/types";
 
@@ -131,6 +132,38 @@ function MealRow({
   );
 }
 
+/** A plate photo saved before analysis but not logged yet (local-first: nothing is lost). */
+function PendingPlateCard() {
+  const [plate, setPlate] = useState(() => getPlate());
+  if (!plate) return null;
+  return (
+    <Card className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="text-headline">A plate photo is waiting</p>
+        <p className="text-body text-ink-2">Finish logging it, or let it go.</p>
+      </div>
+      <div className="flex shrink-0 flex-col gap-1">
+        <Link
+          href="/camera"
+          className="text-headline inline-flex min-h-11 items-center justify-center rounded-[var(--radius-control)] bg-accent-strong px-4 text-on-accent"
+        >
+          Finish
+        </Link>
+        <button
+          type="button"
+          onClick={() => {
+            clearPlate();
+            setPlate(null);
+          }}
+          className="text-caption min-h-9 font-semibold text-ink-2"
+        >
+          Discard
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 export default function TodayPage() {
   const state = useLadle();
   const toast = useToast();
@@ -174,6 +207,8 @@ export default function TodayPage() {
         )}
 
         <BudgetCard eaten={eaten} target={profile.dailyTarget} />
+
+        <PendingPlateCard />
 
         <nav aria-label="Quick actions" className="flex gap-2">
           <QuickAction icon={<CameraIcon />} label="Snap a plate" href="/camera" />

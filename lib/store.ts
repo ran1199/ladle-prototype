@@ -5,10 +5,10 @@
 // to storage straight away.
 
 import { useSyncExternalStore } from "react";
-import { addRecipe, addRecipeLog, editLog, removeLog, type NewRecipe } from "./logic";
+import { addFoodLog, addRecipe, addRecipeLog, editLog, removeLog, type NewRecipe } from "./logic";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
-import type { AppData, LogEntry, Prefs } from "./types";
+import type { AppData, Confidence, LogEntry, Prefs } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
@@ -86,6 +86,16 @@ export const actions = {
       return result.data;
     });
     return created;
+  },
+  /** Log food that isn't a saved recipe (e.g. a rough photo estimate). */
+  logFood(food: { name: string; kcal: number; confidence: Confidence }): LogEntry {
+    let created: LogEntry | null = null;
+    setData((data) => {
+      const result = addFoodLog(data, food);
+      created = result.log;
+      return result.data;
+    });
+    return created!;
   },
   updateLog(logId: string, changes: { portion?: number; at?: string }) {
     setData((data) => editLog(data, logId, changes));

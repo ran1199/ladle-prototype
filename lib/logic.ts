@@ -213,3 +213,21 @@ export function sumMacros(ingredients: Recipe["ingredients"]) {
     { kcal: 0, protein: 0, carbs: 0, fat: 0 },
   );
 }
+
+/** Logs food that isn't a saved recipe (e.g. a photo-only rough estimate). */
+export function addFoodLog(
+  data: AppData,
+  food: { name: string; kcal: number; confidence: Confidence; portion?: number },
+): { data: AppData; log: LogEntry } {
+  const log: LogEntry = {
+    id: newId("log"),
+    at: new Date().toISOString(),
+    name: food.name,
+    recipeId: null,
+    batchId: null,
+    portion: food.portion ?? 1,
+    kcal: Math.round(food.kcal),
+    confidence: food.confidence,
+  };
+  return { log, data: { ...data, logs: [...data.logs, log] } };
+}

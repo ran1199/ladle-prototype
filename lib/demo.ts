@@ -174,3 +174,47 @@ export function demoDelay(signal?: AbortSignal): Promise<void> {
     });
   });
 }
+
+/** The bundled sample plate photo (an illustration until a real photo is added). */
+export const DEMO_PLATE = {
+  src: "/demo/plate-stir-fry.jpg",
+  alt: "A plate of garlic chicken stir-fry with broccoli, seen from above, with chopsticks.",
+};
+
+/**
+ * Scripted plate analysis. The sample photo matches the garlic chicken stir-fry
+ * (about 1 serving) once it's saved; before that, Ladle suggests importing it.
+ * Returns null for the user's own photos, which need Live AI.
+ */
+export function demoAnalyzePlate(
+  isSample: boolean,
+  recipes: { id: string; key?: string }[],
+): import("./plate").PlateResult | null {
+  if (!isSample) return null;
+  const stirFry = recipes.find((r) => r.key === "garlic-chicken-stir-fry");
+  const others = ["tomato-egg-stir-fry", "kimchi-fried-rice"].filter((id) =>
+    recipes.some((r) => r.id === id),
+  );
+  const roughGuess = { name: "Chicken and broccoli stir-fry", kcal: 480 };
+  if (!stirFry) {
+    return {
+      matchRecipeId: null,
+      matchConfidence: 0.3,
+      alternatives: others,
+      portionServings: 1,
+      portionReason: "One dinner plate",
+      isNewFood: true,
+      roughGuess,
+      suggestImport: true,
+    };
+  }
+  return {
+    matchRecipeId: stirFry.id,
+    matchConfidence: 0.86,
+    alternatives: others,
+    portionServings: 1,
+    portionReason: "One dinner plate, about a quarter of the pan",
+    isNewFood: false,
+    roughGuess,
+  };
+}

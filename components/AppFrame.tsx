@@ -14,11 +14,11 @@ import { ToastProvider } from "./Toast";
 import { WelcomeSheet } from "./WelcomeSheet";
 
 /** Fake iPhone status bar, only drawn inside the desktop frame. */
-function StatusBar() {
+function StatusBar({ light = false }: { light?: boolean }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 top-0 z-30 hidden h-[50px] items-center justify-between px-8 pt-1 text-[15px] font-semibold text-ink min-[769px]:flex"
+      className={`pointer-events-none absolute inset-x-0 top-0 z-30 hidden h-[50px] items-center justify-between px-8 pt-1 text-[15px] font-semibold min-[769px]:flex ${light ? "text-white" : "text-ink"}`}
     >
       <span className="tabular w-14">9:41</span>
       <span className="h-[30px] w-[110px] rounded-full bg-[#000]" />
@@ -59,7 +59,7 @@ export function AppFrame({
         {/* The phone: full screen on phones, a framed device on bigger screens. */}
         <div className="phone-frame h-dvh min-[769px]:h-[min(868px,calc(100dvh-48px))] min-[769px]:min-h-[640px] min-[769px]:aspect-[414/868] min-[769px]:shrink-0 min-[769px]:rounded-[60px] min-[769px]:bg-[var(--frame)] min-[769px]:p-3 min-[769px]:shadow-[0_30px_80px_rgb(43_36_32/0.25)]">
           <div className="app-root relative isolate flex h-full flex-col overflow-hidden bg-bg min-[769px]:rounded-[48px]">
-            <StatusBar />
+            <StatusBar light={pathname === "/camera"} />
             <ToastProvider>
               <SheetHostProvider element={sheetHost} onOpenCountChange={onOpenCountChange}>
                 <div className="flex min-h-0 flex-1 flex-col" inert={sheetOpen}>
