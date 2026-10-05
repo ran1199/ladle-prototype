@@ -17,14 +17,16 @@ import { Button, Card, ScreenHeader } from "@/components/ui";
 import { formatNumber } from "@/lib/format";
 import { formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
 import { actions, useLadle } from "@/lib/store";
-import type { Recipe } from "@/lib/types";
+import type { Fix, Recipe } from "@/lib/types";
 
 function RecipeCard({
   recipe,
+  fixes,
   onLog,
   onPickPortion,
 }: {
   recipe: Recipe;
+  fixes: Fix[];
   onLog: () => void;
   onPickPortion: () => void;
 }) {
@@ -52,7 +54,7 @@ function RecipeCard({
               {recipe.cuisine}
             </span>
           )}
-          <ConfidenceIndicator level={recipeConfidence(recipe)} recipe={recipe} />
+          <ConfidenceIndicator level={recipeConfidence(recipe, fixes)} recipe={recipe} />
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end justify-between gap-1">
@@ -151,6 +153,7 @@ export default function RecipesPage() {
           {shown.map((r) => (
             <li key={r.id}>
               <RecipeCard
+                fixes={state?.data.fixes ?? []}
                 recipe={r}
                 onLog={() => log(r, r.usualPortion)}
                 onPickPortion={() => openPicker(r)}

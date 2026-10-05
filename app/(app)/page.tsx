@@ -114,6 +114,7 @@ function MealRow({
         <p className="text-caption tabular text-ink-2">
           {formatPortion(log.portion)} · {formatTime(log.at)}
           {log.batchId ? " · from batch" : ""}
+          {log.adjustments?.length ? ` · ${log.adjustments.map((a) => a.label).join(", ")}` : ""}
         </p>
         {/* Sits above the row's tap area so it opens its own explanation. */}
         <ConfidenceIndicator level={log.confidence} recipe={recipe} className="relative z-10" />

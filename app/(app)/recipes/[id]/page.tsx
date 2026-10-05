@@ -12,6 +12,7 @@ import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 import { BackLink, Button, ButtonLink, Card, ScreenHeader } from "@/components/ui";
 import { formatNumber } from "@/lib/format";
+import { pendingSuggestion } from "@/lib/fixes";
 import { kcalFor, recipeConfidence, sumMacros } from "@/lib/logic";
 import { actions, useLadle } from "@/lib/store";
 
@@ -55,6 +56,7 @@ export default function RecipeCardPage() {
     );
   }
 
+  const suggestion = pendingSuggestion(recipe, state.data.fixes);
   const totals = sumMacros(recipe.ingredients);
   const per = (n: number) => Math.round(n / recipe.servings);
   const sourceIsLink = recipe.source?.startsWith("http");
@@ -80,8 +82,39 @@ export default function RecipeCardPage() {
               {recipe.cuisine}
             </span>
           )}
-          <ConfidenceIndicator level={recipeConfidence(recipe)} recipe={recipe} />
+          <ConfidenceIndicator
+            level={recipeConfidence(recipe, state.data.fixes)}
+            recipe={recipe}
+            pending={suggestion !== null}
+          />
         </div>
+
+        {suggestion && (
+          <Card className="border-2 border-estimate">
+            <p className="text-headline">{suggestion.text}</p>
+            <p className="text-caption mt-1 text-ink-2">
+              Ladle never changes a recipe without asking.
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              <Button
+                className="flex-1"
+                onClick={() => {
+                  actions.resolveSuggestion(recipe.id, suggestion, true);
+                  toast({ message: "Recipe updated. Ladle will remember that." });
+                }}
+              >
+                Update recipe
+              </Button>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => actions.resolveSuggestion(recipe.id, suggestion, false)}
+              >
+                Not now
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {recipe.photo ? (
           <button

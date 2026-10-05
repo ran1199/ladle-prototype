@@ -229,6 +229,7 @@ export function buildSeed(now: Date = new Date()): AppData {
         at: daysAgo(now, 4, 19, 30),
         recipeKey: "garlic-chicken-stir-fry",
         kind: "more-oil",
+        detail: "+1 tbsp",
         scope: "once",
       },
     ],

@@ -1,16 +1,18 @@
 "use client";
 
-// Opens when a meal on Today is tapped: change the portion or time, or delete the log.
-// Quick fixes ("more oil today") arrive in Milestone 5.
+// Opens when a meal on Today is tapped: quick fixes ("Today was different?"),
+// change the portion or time, or delete the log.
 
 import { useState } from "react";
 import { formatNumber } from "@/lib/format";
+import { FIX_KINDS } from "@/lib/fixes";
 import { formatPortion, kcalFor } from "@/lib/logic";
 import { actions } from "@/lib/store";
-import type { LogEntry, Recipe } from "@/lib/types";
+import type { FixKind, LogEntry, Recipe } from "@/lib/types";
 import { ConfidenceIndicator } from "./ConfidenceIndicator";
 import { DishIllustration } from "./DishIllustration";
 import { PortionPicker } from "./PortionPicker";
+import { QuickFixSheet } from "./QuickFixSheet";
 import { Sheet } from "./Sheet";
 import { useToast } from "./Toast";
 import { Button } from "./ui";
@@ -42,6 +44,7 @@ export function LogDetailSheet({
   const [portion, setPortion] = useState(log?.portion ?? 1);
   const [time, setTime] = useState(log ? toTimeValue(log.at) : "12:00");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [fixKind, setFixKind] = useState<FixKind | null>(null);
 
   const [prevId, setPrevId] = useState(log?.id);
   if (log && log.id !== prevId) {
@@ -55,8 +58,13 @@ export function LogDetailSheet({
   const current = log ?? shown;
   if (!current) return null;
 
-  const kcalPerServing = recipe ? kcalFor(recipe, 1) : current.kcal / current.portion;
-  const kcal = Math.round(kcalPerServing * portion);
+  const adjustments = current.adjustments ?? [];
+  const adjustmentKcal = adjustments.reduce((t, a) => t + a.kcalDelta, 0);
+  const kcalPerServing = recipe
+    ? kcalFor(recipe, 1)
+    : (current.kcal - adjustmentKcal) / current.portion;
+  const kcal = Math.round(kcalPerServing * portion) + adjustmentKcal;
+  const kinds = recipe ? FIX_KINDS : FIX_KINDS.filter((k) => k.kind === "other");
   const changed = portion !== current.portion || time !== toTimeValue(current.at);
 
   function save() {
@@ -84,6 +92,34 @@ export function LogDetailSheet({
           <ConfidenceIndicator level={current.confidence} recipe={recipe} />
         </div>
       </div>
+
+      <section aria-labelledby="fix-heading" className="mb-5">
+        <h3 id="fix-heading" className="text-headline mb-2">
+          Today was different?
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {kinds.map((k) => (
+            <button
+              key={k.kind}
+              type="button"
+              onClick={() => setFixKind(k.kind)}
+              className="min-h-11 rounded-full bg-surface-2 px-3.5 text-[15px] font-medium hover:brightness-[0.97]"
+            >
+              {k.label}
+            </button>
+          ))}
+        </div>
+        {adjustments.length > 0 && (
+          <ul className="text-caption tabular mt-3 space-y-1 text-ink-2">
+            {adjustments.map((a) => (
+              <li key={a.fixId}>
+                Just this time: {a.label} · {a.kcalDelta >= 0 ? "+" : "−"}
+                {formatNumber(Math.abs(a.kcalDelta))} kcal
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <h3 className="text-headline mb-2">Portion</h3>
       <PortionPicker value={portion} onChange={setPortion} kcalPerServing={kcalPerServing} />
@@ -127,6 +163,24 @@ export function LogDetailSheet({
           </div>
         )}
       </div>
+
+      <QuickFixSheet
+        open={fixKind !== null}
+        onClose={() => setFixKind(null)}
+        recipe={recipe}
+        portion={current.portion}
+        baseKcal={current.kcal}
+        initialKind={fixKind ?? undefined}
+        onApply={(option, scope) => actions.applyFix({ option, scope, logId: current.id })}
+        onResolve={(suggestion, accept) => {
+          if (recipe) actions.resolveSuggestion(recipe.id, suggestion, accept);
+        }}
+        onDone={(message) => {
+          setFixKind(null);
+          toast({ message });
+          onClose();
+        }}
+      />
     </Sheet>
   );
 }

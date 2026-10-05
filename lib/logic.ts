@@ -1,8 +1,15 @@
 // Rules shared by several screens: confidence levels, portions, calories and
 // time-of-day groups. Kept free of React so they're easy to read and test.
 
+import {
+  applyToRecipe,
+  optionFor,
+  pendingSuggestion,
+  type FixOption,
+  type Suggestion,
+} from "./fixes";
 import { recipeKcalPerServing } from "./seed";
-import type { AppData, Batch, Confidence, LogEntry, Recipe } from "./types";
+import type { AppData, Batch, Confidence, Fix, LogEntry, Recipe } from "./types";
 
 /** Logs needed before a recipe shows "Your recipe ✓". */
 export const CONFIRMATIONS_NEEDED = 3;
@@ -10,8 +17,19 @@ export const CONFIRMATIONS_NEEDED = 3;
 /** How long a batch shows in the leftovers nudge. */
 export const BATCH_FRESH_DAYS = 4;
 
-export function recipeConfidence(recipe: Recipe): Confidence {
-  return recipe.confirmedLogs >= CONFIRMATIONS_NEEDED ? "confirmed" : "good";
+/**
+ * "Your recipe ✓" needs 3+ confirmed logs and no pending correction (a repeated
+ * "Just this time" fix the user hasn't decided on yet). Otherwise "Good estimate".
+ */
+export function recipeConfidence(recipe: Recipe, fixes: Fix[] = []): Confidence {
+  return recipe.confirmedLogs >= CONFIRMATIONS_NEEDED && !pendingSuggestion(recipe, fixes)
+    ? "confirmed"
+    : "good";
+}
+
+/** Calories from "Just this time" fixes on a log. */
+function adjustmentKcal(log: LogEntry): number {
+  return (log.adjustments ?? []).reduce((s, a) => s + a.kcalDelta, 0);
 }
 
 export function kcalFor(recipe: Recipe, portion: number): number {
@@ -84,7 +102,7 @@ export function addRecipeLog(
     batchId: opts.batchId ?? null,
     portion,
     kcal: kcalFor(recipe, portion),
-    confidence: recipeConfidence(recipe),
+    confidence: recipeConfidence(recipe, data.fixes),
     countedConfirmation: true,
     prevLastEatenAt: recipe.lastEatenAt,
   };
@@ -114,6 +132,8 @@ export function removeLog(data: AppData, logId: string): AppData {
   return {
     ...data,
     logs: data.logs.filter((l) => l.id !== logId),
+    // A deleted (or undone) log takes its "Just this time" fixes with it.
+    fixes: data.fixes.filter((f) => f.logId !== logId),
     recipes: data.recipes.map((r) => {
       if (r.id !== log.recipeId) return r;
       return {
@@ -143,7 +163,10 @@ export function editLog(
   if (!log) return data;
   const recipe = data.recipes.find((r) => r.id === log.recipeId);
   const portion = changes.portion ?? log.portion;
-  const kcal = recipe ? kcalFor(recipe, portion) : Math.round((log.kcal / log.portion) * portion);
+  const base = log.kcal - adjustmentKcal(log);
+  const kcal =
+    (recipe ? kcalFor(recipe, portion) : Math.round((base / log.portion) * portion)) +
+    adjustmentKcal(log);
   const delta = portion - log.portion;
   return {
     ...data,
@@ -230,4 +253,86 @@ export function addFoodLog(
     confidence: food.confidence,
   };
   return { log, data: { ...data, logs: [...data.logs, log] } };
+}
+
+function fixRecord(recipe: Recipe, option: FixOption, scope: Fix["scope"], logId?: string): Fix {
+  return {
+    id: newId("fix"),
+    at: new Date().toISOString(),
+    recipeKey: recipe.key ?? recipe.id,
+    kind: option.kind,
+    detail: option.detail,
+    scope,
+    ...(logId ? { logId } : {}),
+  };
+}
+
+/**
+ * Applies a quick fix. "once" changes only the log (adds an adjustment);
+ * "always" updates the saved recipe (with a history line) and recalculates the log.
+ * Returns the suggestion to show next, if the same "once" fix has now been made twice.
+ */
+export function applyFix(
+  data: AppData,
+  input: { option: FixOption; scope: "once" | "always"; logId: string },
+): { data: AppData; suggestion: Suggestion | null } {
+  const log = data.logs.find((l) => l.id === input.logId);
+  if (!log) return { data, suggestion: null };
+  const recipe = data.recipes.find((r) => r.id === log.recipeId) ?? null;
+  const { option } = input;
+
+  if (input.scope === "once" || !recipe) {
+    const fix = recipe ? fixRecord(recipe, option, "once", log.id) : null;
+    const adjustment = {
+      fixId: fix?.id ?? newId("adj"),
+      label: option.label,
+      kcalDelta: option.plateDelta,
+    };
+    const next: AppData = {
+      ...data,
+      fixes: fix ? [...data.fixes, fix] : data.fixes,
+      logs: data.logs.map((l) =>
+        l.id === log.id
+          ? {
+              ...l,
+              kcal: l.kcal + option.plateDelta,
+              adjustments: [...(l.adjustments ?? []), adjustment],
+            }
+          : l,
+      ),
+    };
+    return { data: next, suggestion: recipe ? pendingSuggestion(recipe, next.fixes) : null };
+  }
+
+  const updated = applyToRecipe(recipe, option);
+  const next: AppData = {
+    ...data,
+    fixes: [...data.fixes, fixRecord(recipe, option, "always")],
+    recipes: data.recipes.map((r) => (r.id === recipe.id ? updated : r)),
+    logs: data.logs.map((l) =>
+      l.id === log.id ? { ...l, kcal: kcalFor(updated, l.portion) + adjustmentKcal(l) } : l,
+    ),
+  };
+  return { data: next, suggestion: null };
+}
+
+/** The user's answer to "You usually … Update your recipe?" */
+export function resolveSuggestion(
+  data: AppData,
+  recipeId: string,
+  suggestion: Suggestion,
+  accept: boolean,
+): AppData {
+  const recipe = data.recipes.find((r) => r.id === recipeId);
+  if (!recipe) return data;
+  const option = optionFor(recipe, suggestion.kind, suggestion.detail);
+  if (!option) return data;
+  const fix = fixRecord(recipe, option, accept ? "always" : "dismissed");
+  return {
+    ...data,
+    fixes: [...data.fixes, fix],
+    recipes: accept
+      ? data.recipes.map((r) => (r.id === recipeId ? applyToRecipe(r, option) : r))
+      : data.recipes,
+  };
 }

@@ -13,7 +13,7 @@ import { DishIllustration } from "@/components/DishIllustration";
 import { CameraIcon, CloseIcon, SearchIcon } from "@/components/icons";
 import { ModeBadge } from "@/components/ModeBadge";
 import { PortionPicker } from "@/components/PortionPicker";
-import { Sheet } from "@/components/Sheet";
+import { QuickFixSheet } from "@/components/QuickFixSheet";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui";
 import { DEMO_LINK } from "@/lib/content";
@@ -31,7 +31,7 @@ import {
   type PendingPlate,
 } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
-import type { Recipe } from "@/lib/types";
+import type { Fix, Recipe } from "@/lib/types";
 
 /* ---------- Top bar ---------- */
 
@@ -306,7 +306,15 @@ function RecipePicker({
   );
 }
 
-function Result({ plate, recipes }: { plate: PendingPlate; recipes: Recipe[] }) {
+function Result({
+  plate,
+  recipes,
+  fixes,
+}: {
+  plate: PendingPlate;
+  recipes: Recipe[];
+  fixes: Fix[];
+}) {
   const router = useRouter();
   const toast = useToast();
   const result = plate.result;
@@ -318,6 +326,7 @@ function Result({ plate, recipes }: { plate: PendingPlate; recipes: Recipe[] }) 
     suggested ? "main" : result?.isNewFood ? "new" : "pick",
   );
   const [fixesOpen, setFixesOpen] = useState(false);
+  const loggedId = useRef<string | null>(null);
 
   function finish(message: string, logId: string) {
     clearPlate();
@@ -472,7 +481,7 @@ function Result({ plate, recipes }: { plate: PendingPlate; recipes: Recipe[] }) 
         <p className="font-display tabular text-[34px] leading-10 font-semibold">
           {formatNumber(kcal)} <span className="text-title">kcal</span>
         </p>
-        <ConfidenceIndicator level={recipeConfidence(recipe)} recipe={recipe} />
+        <ConfidenceIndicator level={recipeConfidence(recipe, fixes)} recipe={recipe} />
       </div>
 
       <Button className="mt-4 w-full" onClick={logIt}>
@@ -486,22 +495,32 @@ function Result({ plate, recipes }: { plate: PendingPlate; recipes: Recipe[] }) 
         Today was different?
       </button>
 
-      <Sheet open={fixesOpen} onClose={() => setFixesOpen(false)} title="Today was different?">
-        <p className="text-body">
-          Quick fixes like &ldquo;more oil&rdquo; or &ldquo;halved the batch&rdquo; arrive in
-          Milestone 5. For now, adjust the portion.
-        </p>
-        <Button variant="secondary" className="mt-5 w-full" onClick={() => setFixesOpen(false)}>
-          OK
-        </Button>
-      </Sheet>
+      <QuickFixSheet
+        open={fixesOpen}
+        onClose={() => setFixesOpen(false)}
+        recipe={recipe}
+        portion={portion}
+        baseKcal={kcal}
+        onApply={(option, scope) => {
+          // Log the meal, then apply the fix to that log.
+          const log = actions.logRecipe(recipe.id, portion);
+          if (!log) return null;
+          loggedId.current = log.id;
+          return actions.applyFix({ option, scope, logId: log.id });
+        }}
+        onResolve={(suggestion, accept) => actions.resolveSuggestion(recipe.id, suggestion, accept)}
+        onDone={(message) => {
+          setFixesOpen(false);
+          if (loggedId.current) finish(`Logged. ${message}`, loggedId.current);
+        }}
+      />
     </Panel>
   );
 }
 
 /* ---------- The page ---------- */
 
-function PlateFlow({ recipes }: { recipes: Recipe[] }) {
+function PlateFlow({ recipes, fixes }: { recipes: Recipe[]; fixes: Fix[] }) {
   const router = useRouter();
   const [plate, setPlate] = useState<PendingPlate | null>(() => {
     const saved = getPlate();
@@ -583,7 +602,9 @@ function PlateFlow({ recipes }: { recipes: Recipe[] }) {
           </div>
         </Panel>
       )}
-      {plate.status === "ready" && <Result key={plate.id} plate={plate} recipes={recipes} />}
+      {plate.status === "ready" && (
+        <Result key={plate.id} plate={plate} recipes={recipes} fixes={fixes} />
+      )}
     </div>
   );
 }
@@ -591,5 +612,5 @@ function PlateFlow({ recipes }: { recipes: Recipe[] }) {
 export default function CameraPage() {
   const state = useLadle();
   if (!state) return <div className="h-full bg-[#14110e]" />;
-  return <PlateFlow recipes={state.data.recipes} />;
+  return <PlateFlow recipes={state.data.recipes} fixes={state.data.fixes} />;
 }

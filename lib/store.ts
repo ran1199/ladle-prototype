@@ -5,7 +5,17 @@
 // to storage straight away.
 
 import { useSyncExternalStore } from "react";
-import { addFoodLog, addRecipe, addRecipeLog, editLog, removeLog, type NewRecipe } from "./logic";
+import {
+  addFoodLog,
+  addRecipe,
+  addRecipeLog,
+  applyFix,
+  editLog,
+  removeLog,
+  resolveSuggestion,
+  type NewRecipe,
+} from "./logic";
+import type { FixOption, Suggestion } from "./fixes";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
 import type { AppData, Confidence, LogEntry, Prefs } from "./types";
@@ -20,9 +30,20 @@ export type LadleState = { data: AppData; prefs: Prefs };
 let state: LadleState | null = null;
 const listeners = new Set<() => void>();
 
+/** Brings data saved by an earlier version of the prototype up to date. */
+function upgrade(data: AppData): AppData {
+  return {
+    ...data,
+    // Milestone 5 added `detail` to fixes; the seeded one is "+1 tbsp" of oil.
+    fixes: data.fixes.map((f) =>
+      f.detail ? f : { ...f, detail: f.kind === "more-oil" ? "+1 tbsp" : "" },
+    ),
+  };
+}
+
 function load(): LadleState {
   const saved = storage.get<AppData>(DATA_KEY);
-  const data = saved && saved.version === 1 ? saved : buildSeed();
+  const data = saved && saved.version === 1 ? upgrade(saved) : buildSeed();
   if (!saved) storage.set(DATA_KEY, data);
   const prefs = { ...DEFAULT_PREFS, ...storage.get<Partial<Prefs>>(PREFS_KEY) };
   return { data, prefs };
@@ -109,6 +130,20 @@ export const actions = {
       return result.data;
     });
     return id;
+  },
+  /** Apply a quick fix to a log. Returns a suggestion if the same fix was made twice. */
+  applyFix(input: { option: FixOption; scope: "once" | "always"; logId: string }) {
+    let suggestion: Suggestion | null = null;
+    setData((data) => {
+      const result = applyFix(data, input);
+      suggestion = result.suggestion;
+      return result.data;
+    });
+    return suggestion as Suggestion | null;
+  },
+  /** "Update recipe" (accept) or "Not now". */
+  resolveSuggestion(recipeId: string, suggestion: Suggestion, accept: boolean) {
+    setData((data) => resolveSuggestion(data, recipeId, suggestion, accept));
   },
   /** Delete a log (also used for Undo). */
   deleteLog(logId: string) {

@@ -70,6 +70,8 @@ export type LogEntry = {
   countedConfirmation?: boolean;
   /** The recipe's previous "last eaten" time, restored if this log is deleted. */
   prevLastEatenAt?: string | null;
+  /** "Just this time" quick fixes; their calories are included in `kcal`. */
+  adjustments?: LogAdjustment[];
 };
 
 export type Batch = {
@@ -80,15 +82,28 @@ export type Batch = {
   servingsLeft: number;
 };
 
-/** A quick correction made to a log ("Just this time") or a recipe ("Always"). */
+export type FixKind = "more-oil" | "less-oil" | "halved" | "swapped" | "other";
+
+/**
+ * A quick correction. "once" changed one log ("Just this time"); "always" changed
+ * the saved recipe; "dismissed" means the user said "Not now" to a suggestion.
+ * Ladle learns from these: the same "once" fix twice → suggest updating the recipe.
+ */
 export type Fix = {
   id: string;
   at: string;
   /** Matches a recipe by a stable key, so a fix can apply before the recipe is saved. */
   recipeKey: string;
-  kind: "more-oil" | "less-oil" | "halved" | "swapped" | "other";
-  scope: "once" | "always";
+  kind: FixKind;
+  /** Which variant, e.g. "+1 tbsp", "chicken thighs>chicken breast", "cheese". */
+  detail: string;
+  scope: "once" | "always" | "dismissed";
+  /** The log a "once" fix changed (removed again if that log is deleted). */
+  logId?: string;
 };
+
+/** A "Just this time" change on one log, e.g. { label: "More oil: +1 tbsp", kcalDelta: 30 }. */
+export type LogAdjustment = { fixId: string; label: string; kcalDelta: number };
 
 export type Profile = {
   name: string;

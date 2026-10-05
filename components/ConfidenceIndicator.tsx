@@ -38,13 +38,16 @@ const LEVELS: Record<
 
 const AI_NOTE = "Ingredient values are AI estimates based on standard nutrition data.";
 
-function explanation(level: Confidence, recipe?: Recipe | null): string {
+function explanation(level: Confidence, recipe?: Recipe | null, pending = false): string {
   if (level === "rough" || !recipe) {
     return "Estimated from your photo alone, without a recipe, so hidden oil and sauce may be missed.";
   }
   const servings = `${recipe.servings} ${recipe.servings === 1 ? "serving" : "servings"}`;
   if (level === "confirmed") {
     return `From your recipe ‘${recipe.name}’ (${servings}) × the portion you confirmed. ${AI_NOTE}`;
+  }
+  if (pending) {
+    return `From your recipe ‘${recipe.name}’ (${servings}) × your portion. You’ve changed it the same way more than once, so Ladle is asking whether to update the recipe. ${AI_NOTE}`;
   }
   const left = Math.max(0, CONFIRMATIONS_NEEDED - recipe.confirmedLogs);
   return `From your recipe ‘${recipe.name}’ (${servings}) × your portion. Log it ${left} more ${left === 1 ? "time" : "times"} to make it ‘Your recipe ✓’. ${AI_NOTE}`;
@@ -67,10 +70,13 @@ export function Dots({ level }: { level: Confidence }) {
 export function ConfidenceIndicator({
   level,
   recipe,
+  pending = false,
   className = "",
 }: {
   level: Confidence;
   recipe?: Recipe | null;
+  /** The recipe has a repeated correction waiting for the user's decision. */
+  pending?: boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -88,7 +94,7 @@ export function ConfidenceIndicator({
         {l.label}
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={l.label}>
-        <p className="text-body">{explanation(level, recipe)}</p>
+        <p className="text-body">{explanation(level, recipe, pending)}</p>
         <ul className="mt-5 space-y-3 rounded-[var(--radius-control)] bg-surface-2 p-4">
           {(Object.keys(LEVELS) as Confidence[]).map((key) => (
             <li key={key} className="flex items-start gap-3">
