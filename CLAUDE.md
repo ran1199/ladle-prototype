@@ -321,6 +321,7 @@ Start with Milestone 1. Before writing code, give me a short plan for it and a c
 ## Working notes (kept up to date by Claude)
 
 - **Where the work happens:** Claude works in a temporary cloud computer with a copy of the GitHub repository `ran1199/ladle-prototype` (public). It cannot see Ran's Mac. Anything not committed and pushed to GitHub is lost when the session ends. Nothing is installed on Ran's Mac, so the brief's Mac "tools check" (Homebrew, `gh`) is skipped. Ran created the repository on github.com (Claude's GitHub connection can't create repositories).
+- **Public site:** https://ladle-prototype.vercel.app (Vercel, connected to GitHub by Ran; production branch `main`). Branch pushes get preview links, which Vercel may keep private to Ran's Vercel login (Deployment Protection), so test participants use the public site.
 - **Branches:** `main` = the public site. Each milestone is built on a branch named `milestone-<n>` (Vercel gives it a preview link); it is merged into `main` only after Ran approves the milestone.
 - **Checking the live site:** this cloud computer's network usually can't open vercel.app, so Ran checks the preview/public links on their phone and laptop.
 - **Stack:** Next.js 16 (App Router, Turbopack), React 19, TypeScript strict, Tailwind CSS 4. Next.js 16 differs from older versions: read `node_modules/next/dist/docs/` before using an API (see AGENTS.md).
