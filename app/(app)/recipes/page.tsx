@@ -3,10 +3,12 @@
 // Recipes tab (F6): search, recipes sorted by most recently eaten, one-tap Log
 // with Undo, and a portion picker (long-press Log, or the "…" button).
 
+import Link from "next/link";
 import { useState } from "react";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { MoreIcon, PlusIcon, SearchIcon } from "@/components/icons";
+import { ImportSheet } from "@/components/ImportSheet";
 import { PortionPicker } from "@/components/PortionPicker";
 import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
@@ -32,7 +34,14 @@ function RecipeCard({
     <Card className="flex gap-3 p-4">
       <DishIllustration kind={recipe.illustration} seed={recipe.id} size={64} />
       <div className="min-w-0 flex-1">
-        <h2 className="text-headline">{recipe.name}</h2>
+        <h2 className="text-headline">
+          <Link
+            href={`/recipes/${recipe.id}`}
+            className="underline-offset-4 hover:underline focus-visible:underline"
+          >
+            {recipe.name}
+          </Link>
+        </h2>
         <p className="text-caption tabular mt-0.5 text-ink-2">
           {formatNumber(perServing)} kcal per serving · {recipe.servings}{" "}
           {recipe.servings === 1 ? "serving" : "servings"}
@@ -85,7 +94,8 @@ export default function RecipesPage() {
 
   const recipes = state
     ? [...state.data.recipes].sort((a, b) =>
-        (b.lastEatenAt ?? "").localeCompare(a.lastEatenAt ?? ""),
+        // Most recently eaten first; a new recipe counts from when it was added.
+        (b.lastEatenAt ?? b.createdAt).localeCompare(a.lastEatenAt ?? a.createdAt),
       )
     : [];
   const q = query.trim().toLowerCase();
@@ -176,14 +186,7 @@ export default function RecipesPage() {
         )}
       </Sheet>
 
-      <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Add a recipe">
-        <p className="text-body">
-          Importing from a link, pasted text or a photo of a recipe card arrives in Milestone 3.
-        </p>
-        <Button variant="secondary" className="mt-5 w-full" onClick={() => setAddOpen(false)}>
-          OK
-        </Button>
-      </Sheet>
+      <ImportSheet open={addOpen} onClose={() => setAddOpen(false)} />
     </>
   );
 }

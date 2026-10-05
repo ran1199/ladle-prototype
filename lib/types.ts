@@ -15,6 +15,14 @@ export type Ingredient = {
   protein: number;
   carbs: number;
   fat: number;
+  /** Weight in grams, when known. */
+  grams?: number | null;
+  /** The amount was vague in the source (e.g. "oil for frying"). */
+  vague?: boolean;
+  /** Ladle couldn't read this line clearly; the user should check it. */
+  unreadable?: boolean;
+  /** The user picked "Not sure", so Ladle used a sensible middle value. */
+  estimated?: boolean;
 };
 
 export type ChangeEntry = {
@@ -26,6 +34,8 @@ export type ChangeEntry = {
 
 export type Recipe = {
   id: string;
+  /** Stable key from the imported name (e.g. "garlic-chicken-stir-fry"), used to match fixes. */
+  key?: string;
   name: string;
   cuisine: string | null;
   servings: number;
@@ -38,6 +48,8 @@ export type Recipe = {
   illustration: "bowl" | "plate" | "jar" | "pot";
   /** Where the recipe came from (a link, or a note like "Recipe card"). */
   source: string | null;
+  /** A photo of the recipe (e.g. the recipe card it was imported from). */
+  photo?: { src: string; alt: string } | null;
   lastEatenAt: string | null;
   createdAt: string;
   history: ChangeEntry[];

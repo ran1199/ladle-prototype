@@ -160,3 +160,56 @@ export function editLog(
     ),
   };
 }
+
+/** "Garlic chicken stir-fry" → "garlic-chicken-stir-fry" */
+export function slugify(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "recipe"
+  );
+}
+
+export type NewRecipe = Pick<
+  Recipe,
+  "name" | "servings" | "ingredients" | "source" | "photo" | "illustration" | "cuisine"
+> & { historyNote: string };
+
+/** Adds an imported recipe. Returns the new data and the recipe's id. */
+export function addRecipe(data: AppData, input: NewRecipe): { data: AppData; id: string } {
+  const key = slugify(input.name);
+  let id = key;
+  for (let n = 2; data.recipes.some((r) => r.id === id); n++) id = `${key}-${n}`;
+  const now = new Date().toISOString();
+  const recipe: Recipe = {
+    id,
+    key,
+    name: input.name,
+    cuisine: input.cuisine,
+    servings: input.servings,
+    ingredients: input.ingredients,
+    confirmedLogs: 0,
+    usualPortion: 1,
+    illustration: input.illustration,
+    source: input.source,
+    photo: input.photo ?? null,
+    lastEatenAt: null,
+    createdAt: now,
+    history: [{ at: now, summary: input.historyNote }],
+  };
+  return { id, data: { ...data, recipes: [recipe, ...data.recipes] } };
+}
+
+export function sumMacros(ingredients: Recipe["ingredients"]) {
+  return ingredients.reduce(
+    (t, i) => ({
+      kcal: t.kcal + i.kcal,
+      protein: t.protein + i.protein,
+      carbs: t.carbs + i.carbs,
+      fat: t.fat + i.fat,
+    }),
+    { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+  );
+}

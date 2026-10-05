@@ -165,6 +165,26 @@ body {
   }
 }
 
+/* "Reading the recipe": steam rising from the pot. */
+@keyframes steam {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
 /* Respect "Reduce motion": no sliding, no fades. */
 @media (prefers-reduced-motion: reduce) {
   *,

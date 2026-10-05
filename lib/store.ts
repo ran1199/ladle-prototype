@@ -5,7 +5,7 @@
 // to storage straight away.
 
 import { useSyncExternalStore } from "react";
-import { addRecipeLog, editLog, removeLog } from "./logic";
+import { addRecipe, addRecipeLog, editLog, removeLog, type NewRecipe } from "./logic";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
 import type { AppData, LogEntry, Prefs } from "./types";
@@ -89,6 +89,16 @@ export const actions = {
   },
   updateLog(logId: string, changes: { portion?: number; at?: string }) {
     setData((data) => editLog(data, logId, changes));
+  },
+  /** Save an imported recipe. Returns its id. */
+  saveRecipe(input: NewRecipe): string {
+    let id = "";
+    setData((data) => {
+      const result = addRecipe(data, input);
+      id = result.id;
+      return result.data;
+    });
+    return id;
   },
   /** Delete a log (also used for Undo). */
   deleteLog(logId: string) {

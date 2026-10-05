@@ -65,15 +65,50 @@ export function Card({
 }
 
 /** Top of every screen: the Demo / Live AI badge, then a large title. */
-export function ScreenHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function ScreenHeader({
+  title,
+  subtitle,
+  leading,
+}: {
+  title: string;
+  subtitle?: string;
+  /** Optional control at top left, e.g. a back link. */
+  leading?: ReactNode;
+}) {
   return (
     <header className="px-5 pb-4" style={{ paddingTop: "calc(var(--safe-top) + 8px)" }}>
-      <div className="flex h-8 items-center justify-end">
+      <div className="flex h-8 items-center justify-between">
+        <div className="-ml-2">{leading}</div>
         <ModeBadge />
       </div>
       <h1 className="text-large-title mt-1">{title}</h1>
       {subtitle && <p className="text-body mt-1 text-ink-2">{subtitle}</p>}
     </header>
+  );
+}
+
+/** "‹ Recipes" style back link for the top of a sub-screen. */
+export function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="text-headline inline-flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-accent-strong"
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="m15 6-6 6 6 6" />
+      </svg>
+      {label}
+    </Link>
   );
 }
 
