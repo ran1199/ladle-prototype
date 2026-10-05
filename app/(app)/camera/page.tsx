@@ -225,7 +225,9 @@ function PhotoBackdrop({ plate }: { plate: PendingPlate }) {
         alt={plate.photo.alt}
         fill
         sizes="420px"
-        unoptimized={plate.photo.src.startsWith("data:")}
+        // Shown as-is: photos taken here are already downscaled, and the sample can be
+        // swapped for a new file with the same name without a stale resized copy.
+        unoptimized
         className="object-cover"
         priority
       />

@@ -6,6 +6,10 @@ import "./globals.css";
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
+// Scales the desktop phone mock-up (868 px tall) to fit short screens, keeping its
+// layout identical everywhere. Runs before the first paint and on every resize.
+const FRAME_ZOOM_SCRIPT = `(function(){var d=document.documentElement;function f(){var z=Math.min(1,(window.innerHeight-48)/868);d.style.setProperty("--frame-zoom",String(Math.max(0.6,z)))}f();window.addEventListener("resize",f)})();`;
+
 export const metadata: Metadata = {
   title: "Ladle: calorie tracking for home cooks",
   description:
@@ -26,7 +30,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable} antialiased`}>
+    // The inline script sets --frame-zoom on <html> before React loads, so React
+    // is told not to warn about that one attribute.
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${inter.variable} antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: FRAME_ZOOM_SCRIPT }} />
+      </head>
       <body>{children}</body>
     </html>
   );

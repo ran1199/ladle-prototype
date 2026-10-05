@@ -175,10 +175,10 @@ export function demoDelay(signal?: AbortSignal): Promise<void> {
   });
 }
 
-/** The bundled sample plate photo (an illustration until a real photo is added). */
+/** The bundled sample plate photo (Ran’s own photo; metadata removed). */
 export const DEMO_PLATE = {
   src: "/demo/plate-stir-fry.jpg",
-  alt: "A plate of garlic chicken stir-fry with broccoli, seen from above, with chopsticks.",
+  alt: "A bowl of chicken with broccoli, mushrooms, garlic and peppers, held over a kitchen counter.",
 };
 
 /**
@@ -202,7 +202,7 @@ export function demoAnalyzePlate(
       matchConfidence: 0.3,
       alternatives: others,
       portionServings: 1,
-      portionReason: "One dinner plate",
+      portionReason: "One bowl",
       isNewFood: true,
       roughGuess,
       suggestImport: true,
@@ -213,7 +213,7 @@ export function demoAnalyzePlate(
     matchConfidence: 0.86,
     alternatives: others,
     portionServings: 1,
-    portionReason: "One dinner plate, about a quarter of the pan",
+    portionReason: "One bowl, about a quarter of the pan",
     isNewFood: false,
     roughGuess,
   };

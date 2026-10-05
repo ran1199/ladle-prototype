@@ -208,6 +208,27 @@ body {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
+/* Desktop and tablet: the phone mock-up is always the same iPhone size
+   (390 × 844 screen inside a 12 px bezel). On short screens the whole phone
+   is scaled down (--frame-zoom, set in app/layout.tsx before the first paint),
+   so the app's layout never changes from page to page. */
+@media (min-width: 769px) {
+  .phone-frame {
+    width: 414px;
+    height: 868px;
+    flex: none;
+    zoom: var(--frame-zoom, 1);
+  }
+}
+
+/* Side by side with the panel: keep the whole phone in view while the panel scrolls. */
+@media (min-width: 960px) {
+  .phone-frame {
+    position: sticky;
+    top: 24px;
+  }
+}
+
 @media (min-width: 769px) {
   .app-root {
     --safe-top: 50px;
