@@ -335,5 +335,5 @@ Start with Milestone 1. Before writing code, give me a short plan for it and a c
 - **Desktop background** is the same cream as the app (`--desk`), so links in the side panel keep AA contrast.
 - **CASE_STUDY_URL** is read when the site is built, so after changing it in Vercel, redeploy. Ran has no case study link yet, so it stays empty and the case study buttons are hidden.
 - **Git author:** commits use the neutral `Claude <noreply@anthropic.com>` author, never Ran's personal email. The very first commit shows Ran's name and email; rewriting history was blocked by this environment's safety check, and Ran chose to leave it.
-- **Current milestone:** Milestones 1–3 approved and published to `main`. Milestone 4 built on `milestone-4`, waiting for Ran's review.
+- **Current milestone:** Milestones 1–4 approved and published to `main`. Next: Milestone 5 (Corrections and learning).
 - **Checking locally in the cloud computer:** `npm run build`, then `npx next start -p 3100` in the background, and use the global Playwright with Chromium for screenshots.
