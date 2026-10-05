@@ -54,6 +54,10 @@ export type LogEntry = {
   portion: number;
   kcal: number;
   confidence: Confidence;
+  /** True if this log added one to its recipe's confirmed count (undone if the log is deleted). */
+  countedConfirmation?: boolean;
+  /** The recipe's previous "last eaten" time, restored if this log is deleted. */
+  prevLastEatenAt?: string | null;
 };
 
 export type Batch = {

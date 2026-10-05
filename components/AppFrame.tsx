@@ -10,6 +10,7 @@ import { SheetHostProvider } from "./Sheet";
 import { SidePanel } from "./SidePanel";
 import { SiteConfigProvider } from "./SiteConfig";
 import { TabBar } from "./TabBar";
+import { ToastProvider } from "./Toast";
 import { WelcomeSheet } from "./WelcomeSheet";
 
 /** Fake iPhone status bar, only drawn inside the desktop frame. */
@@ -58,15 +59,17 @@ export function AppFrame({
         <div className="phone-frame h-dvh min-[769px]:h-[min(868px,calc(100dvh-48px))] min-[769px]:min-h-[640px] min-[769px]:aspect-[414/868] min-[769px]:shrink-0 min-[769px]:rounded-[60px] min-[769px]:bg-[var(--frame)] min-[769px]:p-3 min-[769px]:shadow-[0_30px_80px_rgb(43_36_32/0.25)]">
           <div className="app-root relative isolate flex h-full flex-col overflow-hidden bg-bg min-[769px]:rounded-[48px]">
             <StatusBar />
-            <SheetHostProvider element={sheetHost} onOpenCountChange={onOpenCountChange}>
-              <div className="flex min-h-0 flex-1 flex-col" inert={sheetOpen}>
-                <main id="main" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                  {children}
-                </main>
-                {showTabBar && <TabBar />}
-              </div>
-              <WelcomeSheet caseStudyUrl={caseStudyUrl} />
-            </SheetHostProvider>
+            <ToastProvider>
+              <SheetHostProvider element={sheetHost} onOpenCountChange={onOpenCountChange}>
+                <div className="flex min-h-0 flex-1 flex-col" inert={sheetOpen}>
+                  <main id="main" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    {children}
+                  </main>
+                  {showTabBar && <TabBar />}
+                </div>
+                <WelcomeSheet caseStudyUrl={caseStudyUrl} />
+              </SheetHostProvider>
+            </ToastProvider>
             {/* Sheets appear here, on top of the app. */}
             <div ref={setSheetHost} />
             <div

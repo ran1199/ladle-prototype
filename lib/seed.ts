@@ -195,6 +195,8 @@ export function buildSeed(now: Date = new Date()): AppData {
         portion: 1,
         kcal: 350,
         confidence: "confirmed",
+        countedConfirmation: true,
+        prevLastEatenAt: daysAgo(now, 1, 8, 5),
       },
       {
         id: "seed-log-chili",
@@ -205,6 +207,8 @@ export function buildSeed(now: Date = new Date()): AppData {
         portion: 1,
         kcal: 380,
         confidence: "confirmed",
+        countedConfirmation: true,
+        prevLastEatenAt: daysAgo(now, 1, 19, 0),
       },
     ],
     batches: [

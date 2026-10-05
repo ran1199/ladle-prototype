@@ -5,9 +5,10 @@
 // to storage straight away.
 
 import { useSyncExternalStore } from "react";
+import { addRecipeLog, editLog, removeLog } from "./logic";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
-import type { AppData, Prefs } from "./types";
+import type { AppData, LogEntry, Prefs } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
@@ -76,5 +77,21 @@ export const actions = {
   dismissWelcome() {
     setPrefs({ welcomeDismissed: true });
   },
-  setData,
+  /** Log a portion of a saved recipe to today (optionally from a batch). */
+  logRecipe(recipeId: string, portion: number, batchId?: string): LogEntry | null {
+    let created: LogEntry | null = null;
+    setData((data) => {
+      const result = addRecipeLog(data, recipeId, portion, { batchId });
+      created = result.log;
+      return result.data;
+    });
+    return created;
+  },
+  updateLog(logId: string, changes: { portion?: number; at?: string }) {
+    setData((data) => editLog(data, logId, changes));
+  },
+  /** Delete a log (also used for Undo). */
+  deleteLog(logId: string) {
+    setData((data) => removeLog(data, logId));
+  },
 };

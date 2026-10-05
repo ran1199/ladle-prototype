@@ -16,7 +16,8 @@
   --accent-strong: #b4512e;
   --on-accent: #ffffff;
   --confirmed: #5e7a3a; /* olive: "Your recipe ✓", success */
-  --estimate: #c89b3c; /* mustard: "Good estimate" */
+  --estimate: #c89b3c; /* mustard: "Good estimate" (dots) */
+  --estimate-ink: #8a6516; /* darker mustard for "Good estimate" text (AA contrast) */
   --rough: #9a8f87; /* warm gray: "Rough estimate" */
   --line: #e7ded2; /* dividers, borders */
   --backdrop: rgb(43 36 32 / 0.38);
@@ -45,6 +46,7 @@
     --on-accent: #1c1814;
     --confirmed: #a3bf7a;
     --estimate: #ddb558;
+    --estimate-ink: #ddb558;
     --rough: #a99c92;
     --line: #3d342c;
     --backdrop: rgb(0 0 0 / 0.55);
@@ -67,6 +69,7 @@
   --color-on-accent: var(--on-accent);
   --color-confirmed: var(--confirmed);
   --color-estimate: var(--estimate);
+  --color-estimate-ink: var(--estimate-ink);
   --color-rough: var(--rough);
   --color-line: var(--line);
   --color-desk: var(--desk);
