@@ -138,6 +138,5 @@ export type AppData = {
 
 /** Settings that survive "Reset demo". */
 export type Prefs = {
-  welcomeDismissed: boolean;
   mode: Mode;
 };

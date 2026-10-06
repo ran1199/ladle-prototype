@@ -26,7 +26,7 @@ import type { AppData, Batch, Confidence, LogEntry, PhotoColor, Prefs } from "./
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
 
-const DEFAULT_PREFS: Prefs = { welcomeDismissed: false, mode: "demo" };
+const DEFAULT_PREFS: Prefs = { mode: "demo" };
 
 export type LadleState = { data: AppData; prefs: Prefs };
 
@@ -90,21 +90,10 @@ function setData(update: (data: AppData) => AppData) {
   emit();
 }
 
-function setPrefs(update: Partial<Prefs>) {
-  const current = getSnapshot();
-  const prefs = { ...current.prefs, ...update };
-  storage.set(PREFS_KEY, prefs);
-  state = { ...current, prefs };
-  emit();
-}
-
 export const actions = {
-  /** Restore Maya's starting data. Keeps the welcome sheet dismissed and the mode. */
+  /** Restore Maya's starting data. */
   resetDemo() {
     setData(() => buildSeed());
-  },
-  dismissWelcome() {
-    setPrefs({ welcomeDismissed: true });
   },
   /** Log a portion of a saved recipe to today (optionally from a batch). */
   logRecipe(

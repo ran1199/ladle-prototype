@@ -1,7 +1,7 @@
 "use client";
 
 // iOS-style bottom sheet with a grab handle. Used for secondary actions,
-// confirmations (instead of browser pop-ups) and the welcome message.
+// confirmations (instead of browser pop-ups) and explanations.
 // Closes with Escape or a tap on the dimmed background; keyboard focus stays
 // inside the sheet while it is open and returns to where it was afterwards.
 

@@ -1,4 +1,4 @@
-// Fixed text used in several places (side panel, welcome sheet, Me tab).
+// Fixed text used in several places (side panel, About, Me tab).
 // Edit wording here and it changes everywhere.
 
 export const REPO_URL = "https://github.com/ran1199/ladle-prototype";

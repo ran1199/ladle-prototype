@@ -11,7 +11,6 @@ import { SidePanel } from "./SidePanel";
 import { SiteConfigProvider } from "./SiteConfig";
 import { TabBar } from "./TabBar";
 import { ToastProvider } from "./Toast";
-import { WelcomeSheet } from "./WelcomeSheet";
 
 /** Fake iPhone status bar, only drawn inside the desktop frame. */
 function StatusBar({ light = false }: { light?: boolean }) {
@@ -68,7 +67,6 @@ export function AppFrame({
                   </main>
                   {showTabBar && <TabBar />}
                 </div>
-                <WelcomeSheet caseStudyUrl={caseStudyUrl} />
               </SheetHostProvider>
             </ToastProvider>
             {/* Sheets appear here, on top of the app. */}
