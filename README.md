@@ -1,12 +1,47 @@
 # Ladle
 
-Ladle: a calorie tracker for home cooks. A UX case study prototype by Ran Guo.
+**A calorie tracker for home cooks.** A UX case study prototype by Ran Guo.
 
-The recipe knows the ingredients; the photo only measures your share.
+> The recipe knows the ingredients; the photo only measures your share.
 
-**Live prototype:** https://ladle-prototype.vercel.app
+**Live prototype:** https://ladle-prototype.vercel.app (works on a phone or a laptop; no sign-up)
 
 This is a prototype for research, not medical or nutrition advice.
+
+## What Ladle is
+
+Most calorie trackers make home cooks re-enter the same meals again and again.
+Ladle flips that: you import a recipe once (from a link, a caption or a photo of
+a recipe card), Ladle works out its ingredients and calories, and after cooking
+you snap your plate. Ladle suggests which recipe it is and how much of it is on
+your plate. Repeat meals take one tap, leftovers from a big pot count down, and
+every number shows how sure Ladle is: **Rough estimate**, **Good estimate**,
+**Your recipe ✓** or **From the label**.
+
+You start as Maya, a home cook with six saved recipes and two meals logged today.
+
+## Screenshots
+
+| Today | Import a recipe | Plate photo | Quick fix |
+| --- | --- | --- | --- |
+| ![Today: 870 kcal left, today's meals and a leftovers nudge](docs/screenshots/today.png) | ![Review screen with the question "How much oil did you use for frying?"](docs/screenshots/import-review.png) | ![Plate photo result: Looks like garlic chicken stir-fry, about 1 serving](docs/screenshots/plate-result.jpg) | ![Today was different? More oil, with Just this time or Always](docs/screenshots/quick-fix.png) |
+
+| Recipe card | Pantry | Add other food | On a laptop |
+| --- | --- | --- | --- |
+| ![Recipe card with totals, servings and ingredients](docs/screenshots/recipe-card.png) | ![Pantry with batches counting down](docs/screenshots/pantry.png) | ![Add other food: barcode, search or restaurant dish](docs/screenshots/add-food.png) | ![The app in a phone frame beside the "Try these" panel](docs/screenshots/desktop.png) |
+
+## Try these
+
+These are the five usability-test tasks, also listed beside the phone on a laptop.
+
+1. You found a garlic chicken stir-fry video and want to cook it tonight. Add it
+   to Ladle (use the demo link in the side panel or under Recipes → Add recipe).
+2. You just cooked the stir-fry. Log what's on your plate (Camera → Use sample photo).
+3. You used extra oil again, like you always do. Fix today's log.
+4. It's Thursday and you're having your usual adobo. Log it.
+5. Add your grandmother's braised pork from her recipe card (Add recipe → Photo → Use example card).
+
+You can also bring your own recipes, links and photos.
 
 ## The AI in this prototype is simulated
 
@@ -46,29 +81,77 @@ card and the sample plate photo) always give the same scripted answers, so
 usability-test tasks behave identically for every participant.
 
 All of this sits behind one interface (`lib/ai/types.ts`), so a real AI can be
-added later without changing the screens.
+added later without changing the screens. This version has no real AI, so there
+are no access codes or API keys to manage.
 
 ## Privacy
 
 Ladle runs in your browser and your data stays on this device. Recipe links are
 fetched by Ladle's server to read the ingredients, and barcode lookups go to Open
-Food Facts. Nothing is stored on a server.
+Food Facts. Nothing is stored on a server. Plate photos are deleted once the meal
+is logged. **Me → Export my data** saves everything as a file, and **Delete all
+data** removes it.
 
-## Running it locally
+## Resetting the demo
+
+- **Me → Reset demo** brings back Maya's starting data (the beside-the-phone
+  panel on a laptop has the same button).
+- **Me → Delete all data** empties Ladle completely.
+
+### Test controls (for usability sessions)
+
+On the **Me** tab, press and hold the version line ("Ladle prototype · v1.0").
+Hidden controls open:
+
+- **Reset to test start:** Maya's starting data, and the timer back to zero. Use
+  it between participants.
+- **Show task timer:** a small stopwatch to start, pause and reset.
+- **Show the next test task:** which of T1–T5 the participant hasn't done yet.
+- **Simulate an AI error on the next request**, **Hide the Prototype pill**, and
+  **Make batches 5 days older** (to see "Still have it?").
+
+## Running it on your own computer
 
 You need [Node.js](https://nodejs.org) 20 or newer.
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm test         # unit tests for the simulated AI
-npm run build    # production build
+npm run dev      # then open http://localhost:3000
+npm test         # automatic checks for the simulated AI and the app's rules
+npm run lint     # code style checks
+npm run build    # the production build Vercel runs
 ```
 
-## Test controls
+Before `dev` and `build`, a small script copies the text-recognition files from
+the installed packages into `public/tesseract` (they aren't stored in GitHub).
 
-On the **Me** tab, press and hold the version line ("Ladle prototype · v0.2") to
-open hidden controls for usability sessions: simulate an AI error on the next
-request, hide the Prototype pill, and make batches 5 days older (to see the
-"Still have it?" question). **Reset demo** on the same tab restores the
-starting data.
+## Deploying
+
+The live site is on [Vercel](https://vercel.com), connected to this GitHub
+repository:
+
+- Every push to `main` updates the public site automatically.
+- Every other branch gets its own preview link, used to review a change before
+  it goes public.
+- No settings are required. One optional setting: `CASE_STUDY_URL` (Vercel →
+  Project → Settings → Environment Variables) adds "Read the case study" links.
+  Redeploy after changing it.
+
+## Quality
+
+- Works on phones from 375 px wide and on laptops (the app sits in a phone
+  frame beside an info panel). Light and dark themes follow the device setting.
+- Built to WCAG 2.2 AA: readable contrast, labels for screen readers, visible
+  keyboard focus, and reduced motion when the device asks for it.
+- Lighthouse on mobile (local build): Performance 91–96, Accessibility 100,
+  Best Practices 100.
+- Security headers include a Content Security Policy. The two server routes
+  (recipe pages and barcodes) accept only checked input and never reach private
+  network addresses.
+
+## Built with
+
+Next.js, React, TypeScript and Tailwind CSS. Fonts: Fraunces and Inter. Zod checks
+every AI answer, Vitest runs the tests, and Tesseract.js reads recipe photos.
+The sample plate photo is Ran's own. The recipe card and illustrations were made
+for this project.
