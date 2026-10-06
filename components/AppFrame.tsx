@@ -51,7 +51,7 @@ export function AppFrame({
   const [sheetOpen, setSheetOpen] = useState(false);
   const onOpenCountChange = useCallback((n: number) => setSheetOpen(n > 0), []);
   // Full-screen steps (camera, importing a recipe) hide the tab bar.
-  const showTabBar = pathname !== "/camera" && pathname !== "/recipes/new";
+  const showTabBar = !["/camera", "/recipes/new", "/add-food"].includes(pathname);
 
   return (
     <SiteConfigProvider value={{ caseStudyUrl }}>

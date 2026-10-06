@@ -3,6 +3,8 @@
 // Hidden test controls for usability sessions (press and hold the version line
 // on the Me tab). Saved in this browser only.
 
+import { useState } from "react";
+import { actions } from "@/lib/store";
 import { setTestFlags, useTestFlags, type TestFlags } from "@/lib/testControls";
 import { Sheet } from "./Sheet";
 import { Button } from "./ui";
@@ -62,9 +64,33 @@ export function TestControls({ open, onClose }: { open: boolean; onClose: () => 
           hint="For clean screenshots and recordings."
         />
       </div>
+      <AgeBatches />
       <Button variant="secondary" className="mt-4 w-full" onClick={onClose}>
         Done
       </Button>
     </Sheet>
+  );
+}
+
+function AgeBatches() {
+  const [done, setDone] = useState(false);
+  return (
+    <div className="border-t border-line py-3">
+      <button
+        type="button"
+        onClick={() => {
+          actions.ageBatches(5);
+          setDone(true);
+        }}
+        className="text-headline min-h-11 text-left text-accent-strong"
+      >
+        Make batches 5 days older
+      </button>
+      <p className="text-caption text-ink-2" aria-live="polite">
+        {done
+          ? "Done. Today and Pantry now ask “Still have it?”."
+          : "To try the “Still have it?” question without waiting."}
+      </p>
+    </div>
   );
 }

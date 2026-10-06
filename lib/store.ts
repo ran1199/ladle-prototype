@@ -11,14 +11,17 @@ import {
   addRecipeLog,
   applyFix,
   editLog,
+  activeBatch,
   removeLog,
   resolveSuggestion,
+  startBatch,
+  updateBatch,
   type NewRecipe,
 } from "./logic";
 import type { FixOption, Suggestion } from "./fixes";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
-import type { AppData, Confidence, LogEntry, PhotoColor, Prefs } from "./types";
+import type { AppData, Batch, Confidence, LogEntry, PhotoColor, Prefs } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
@@ -111,14 +114,51 @@ export const actions = {
   ): LogEntry | null {
     let created: LogEntry | null = null;
     setData((data) => {
-      const result = addRecipeLog(data, recipeId, portion, opts);
+      // Cooked as a batch? Then this serving comes out of the batch.
+      const batchId = opts.batchId ?? activeBatch(data, recipeId)?.id;
+      const result = addRecipeLog(data, recipeId, portion, { ...opts, batchId });
       created = result.log;
       return result.data;
     });
     return created;
   },
+  /** "Cook as a batch". Returns the new batch and a way to undo it. */
+  startBatch(recipeId: string, servingsMade: number) {
+    const before = getSnapshot().data.batches;
+    let created = null as Batch | null;
+    setData((data) => {
+      const result = startBatch(data, recipeId, servingsMade);
+      created = result.batch;
+      return result.data;
+    });
+    return {
+      batch: created!,
+      undo: () => setData((data) => ({ ...data, batches: before })),
+    };
+  },
+  /** "Still have it?" Yes / Clear, or fixing how many servings are left. */
+  updateBatch(batchId: string, changes: { servingsLeft?: number; checkedAt?: string }) {
+    setData((data) => updateBatch(data, batchId, changes));
+  },
+  /** Test control: make every batch look `days` older (to try "Still have it?"). */
+  ageBatches(days: number) {
+    const shift = (iso: string) => new Date(new Date(iso).getTime() - days * 86_400_000).toISOString();
+    setData((data) => ({
+      ...data,
+      batches: data.batches.map((b) => ({
+        ...b,
+        cookedAt: shift(b.cookedAt),
+        ...(b.checkedAt ? { checkedAt: shift(b.checkedAt) } : {}),
+      })),
+    }));
+  },
   /** Log food that isn't a saved recipe (e.g. a rough photo estimate). */
-  logFood(food: { name: string; kcal: number; confidence: Confidence }): LogEntry {
+  logFood(food: {
+    name: string;
+    kcal: number;
+    confidence: Confidence;
+    portion?: number;
+  }): LogEntry {
     let created: LogEntry | null = null;
     setData((data) => {
       const result = addFoodLog(data, food);

@@ -8,7 +8,7 @@ import {
   type FixOption,
   type Suggestion,
 } from "./fixes";
-import { recipeKcalPerServing } from "./seed";
+import { recipeKcalPerServing, recipeTotalKcal } from "./seed";
 import type { AppData, Batch, Confidence, Fix, LogEntry, Recipe } from "./types";
 
 /** Logs needed before a recipe shows "Your recipe ✓". */
@@ -68,9 +68,90 @@ export function mealGroup(iso: string): MealGroup {
   return "Late";
 }
 
+/** Days since the batch was cooked, or since the user last said they still have it. */
+function batchAgeDays(batch: Batch, now: Date): number {
+  const since = Math.max(
+    new Date(batch.cookedAt).getTime(),
+    batch.checkedAt ? new Date(batch.checkedAt).getTime() : 0,
+  );
+  return (now.getTime() - since) / 86_400_000;
+}
+
+/** A batch with servings left, cooked (or checked) in the last 4 days: shown in the leftovers nudge. */
 export function isFreshBatch(batch: Batch, now: Date): boolean {
-  const ageDays = (now.getTime() - new Date(batch.cookedAt).getTime()) / 86_400_000;
-  return batch.servingsLeft > 0 && ageDays <= BATCH_FRESH_DAYS;
+  return batch.servingsLeft > 0 && batchAgeDays(batch, now) <= BATCH_FRESH_DAYS;
+}
+
+/** A batch with servings left but older than 4 days: Ladle asks "Still have it?". */
+export function isStaleBatch(batch: Batch, now: Date): boolean {
+  return batch.servingsLeft > 0 && batchAgeDays(batch, now) > BATCH_FRESH_DAYS;
+}
+
+/** The recipe's batch that logging should take from (the freshest with servings left), if any. */
+export function activeBatch(data: AppData, recipeId: string, now = new Date()): Batch | null {
+  return (
+    data.batches
+      .filter((b) => b.recipeId === recipeId && isFreshBatch(b, now))
+      .sort((a, b) => b.cookedAt.localeCompare(a.cookedAt))[0] ?? null
+  );
+}
+
+/**
+ * Calories for a portion. From a batch, a serving is the batch's share of the
+ * pot (the pot may have made more or fewer servings than the recipe says).
+ */
+export function logKcal(recipe: Recipe, portion: number, batch?: Batch | null): number {
+  if (!batch || batch.servingsMade === recipe.servings) return kcalFor(recipe, portion);
+  return Math.round((recipeTotalKcal(recipe) / batch.servingsMade) * portion);
+}
+
+/** "Cook as a batch": a new batch of the recipe. Earlier batches of it are finished. */
+export function startBatch(
+  data: AppData,
+  recipeId: string,
+  servingsMade: number,
+  at = new Date(),
+): { data: AppData; batch: Batch } {
+  const batch: Batch = {
+    id: newId("batch"),
+    recipeId,
+    cookedAt: at.toISOString(),
+    servingsMade,
+    servingsLeft: servingsMade,
+  };
+  return {
+    batch,
+    data: {
+      ...data,
+      batches: [
+        ...data.batches.map((b) => (b.recipeId === recipeId ? { ...b, servingsLeft: 0 } : b)),
+        batch,
+      ],
+    },
+  };
+}
+
+/** Changes a batch (e.g. "Still have it? Yes", "Clear", or fixing the servings left). */
+export function updateBatch(
+  data: AppData,
+  batchId: string,
+  changes: Partial<Pick<Batch, "servingsLeft" | "checkedAt">>,
+): AppData {
+  return {
+    ...data,
+    batches: data.batches.map((b) =>
+      b.id === batchId
+        ? {
+            ...b,
+            ...changes,
+            servingsLeft: Math.min(
+              b.servingsMade,
+              Math.max(0, changes.servingsLeft ?? b.servingsLeft),
+            ),
+          }
+        : b,
+    ),
+  };
 }
 
 /** True if the most recent log is more than a day old (or there are no logs). */
@@ -94,6 +175,7 @@ export function addRecipeLog(
   const recipe = data.recipes.find((r) => r.id === recipeId);
   if (!recipe) return { data, log: null };
   const at = (opts.at ?? new Date()).toISOString();
+  const batch = opts.batchId ? (data.batches.find((b) => b.id === opts.batchId) ?? null) : null;
   const log: LogEntry = {
     id: newId("log"),
     at,
@@ -101,7 +183,7 @@ export function addRecipeLog(
     recipeId,
     batchId: opts.batchId ?? null,
     portion,
-    kcal: kcalFor(recipe, portion),
+    kcal: logKcal(recipe, portion, batch),
     confidence: recipeConfidence(recipe, data.fixes),
     countedConfirmation: true,
     prevLastEatenAt: recipe.lastEatenAt,
@@ -163,10 +245,11 @@ export function editLog(
   const log = data.logs.find((l) => l.id === logId);
   if (!log) return data;
   const recipe = data.recipes.find((r) => r.id === log.recipeId);
+  const batch = data.batches.find((b) => b.id === log.batchId) ?? null;
   const portion = changes.portion ?? log.portion;
   const base = log.kcal - adjustmentKcal(log);
   const kcal =
-    (recipe ? kcalFor(recipe, portion) : Math.round((base / log.portion) * portion)) +
+    (recipe ? logKcal(recipe, portion, batch) : Math.round((base / log.portion) * portion)) +
     adjustmentKcal(log);
   const delta = portion - log.portion;
   return {
@@ -311,7 +394,14 @@ export function applyFix(
     fixes: [...data.fixes, fixRecord(recipe, option, "always")],
     recipes: data.recipes.map((r) => (r.id === recipe.id ? updated : r)),
     logs: data.logs.map((l) =>
-      l.id === log.id ? { ...l, kcal: kcalFor(updated, l.portion) + adjustmentKcal(l) } : l,
+      l.id === log.id
+        ? {
+            ...l,
+            kcal:
+              logKcal(updated, l.portion, data.batches.find((b) => b.id === l.batchId)) +
+              adjustmentKcal(l),
+          }
+        : l,
     ),
   };
   return { data: next, suggestion: null };

@@ -37,6 +37,10 @@ a **Prototype** pill on every screen explains this.
   and dishes. Restaurant meals use a typical range for the kind of dish and are
   always marked as rough estimates.
 
+Packaged food isn't simulated: a barcode is looked up in the free
+[Open Food Facts](https://world.openfoodfacts.org) database, and label data
+always beats an estimate.
+
 The bundled demo examples (the demo video link, its caption, Grandma's recipe
 card and the sample plate photo) always give the same scripted answers, so
 usability-test tasks behave identically for every participant.
@@ -65,5 +69,6 @@ npm run build    # production build
 
 On the **Me** tab, press and hold the version line ("Ladle prototype · v0.2") to
 open hidden controls for usability sessions: simulate an AI error on the next
-request, and hide the Prototype pill. **Reset demo** on the same tab restores the
+request, hide the Prototype pill, and make batches 5 days older (to see the
+"Still have it?" question). **Reset demo** on the same tab restores the
 starting data.

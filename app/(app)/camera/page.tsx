@@ -12,14 +12,14 @@ import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { CameraIcon, CloseIcon, SearchIcon } from "@/components/icons";
 import { PrototypeBadge } from "@/components/PrototypeBadge";
+import { DishTypePanel, FoodLogPanel, FoodSearchPanel, ROUGH_NOTE } from "@/components/OtherFood";
 import { PortionPicker } from "@/components/PortionPicker";
 import { QuickFixSheet } from "@/components/QuickFixSheet";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui";
-import { ai, AIError, type FoodResult, type PlateContext, type RecipeSummary } from "@/lib/ai";
+import { ai, type FoodResult, type PlateContext, type RecipeSummary } from "@/lib/ai";
 import { DEMO_PLATE } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
-import { DISH_TYPES, OTHER_DISH } from "@/lib/mock-ai/restaurant";
 import { startDraft } from "@/lib/draft";
 import { formatNumber } from "@/lib/format";
 import { formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
@@ -35,7 +35,7 @@ import {
   type PendingPlate,
 } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
-import type { AppData, Fix, Recipe } from "@/lib/types";
+import type { AppData, Confidence, Fix, Recipe } from "@/lib/types";
 
 /* ---------- Top bar ---------- */
 
@@ -313,132 +313,43 @@ function RecipePicker({
   );
 }
 
-const ROUGH_NOTE = "Restaurant food often has hidden oil and sauce. This is a rough guide.";
-
-/** "It's something new": what kind of dish, then a rough estimate (or food search for "Other"). */
+/** "It's something new": what kind of dish (rough estimate), or search for the food. */
 function SomethingNew({
   onLog,
   onImport,
   onPick,
 }: {
-  onLog: (food: { name: string; kcal: number }) => void;
+  onLog: (food: FoodResult, servings: number, confidence: Confidence) => void;
   onImport: () => void;
   onPick: () => void;
 }) {
-  const [busy, setBusy] = useState<string | null>(null);
-  const [estimate, setEstimate] = useState<FoodResult | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<FoodResult[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<
+    | { name: "dish" | "search" }
+    | { name: "food"; food: FoodResult; confidence: Confidence; back: "dish" | "search" }
+  >({ name: "dish" });
 
-  async function choose(dishType: string) {
-    if (dishType === OTHER_DISH) {
-      setSearching(true);
-      return;
-    }
-    setBusy(dishType);
-    setError(null);
-    try {
-      setEstimate(await ai.estimateRestaurantPlate({ dishType }));
-    } catch (e) {
-      setError(e instanceof AIError ? e.message : "Ladle couldn’t estimate that. Try again.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  // Search as the user types (Ladle's built-in food list; quick).
-  useEffect(() => {
-    if (!searching) return;
-    let cancelled = false;
-    const q = query.trim();
-    const t = setTimeout(() => {
-      if (!q) {
-        setResults([]);
-        return;
-      }
-      ai.searchFood(q)
-        .then((r) => {
-          if (!cancelled) setResults(r);
-        })
-        .catch((e) => {
-          if (!cancelled) setError(e instanceof AIError ? e.message : "Search didn’t work. Try again.");
-        });
-    }, 150);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [query, searching]);
-
-  const chip =
-    "text-body min-h-11 rounded-full bg-surface-2 px-4 font-medium hover:brightness-[0.97] disabled:opacity-50";
-
-  if (estimate) {
+  if (step.name === "food") {
     return (
-      <>
-        <p className="text-caption text-ink-2">Rough estimate</p>
-        <h1 className="text-title">{estimate.name}</h1>
-        <p className="text-caption text-ink-2">{estimate.servingLabel}</p>
-        <div className="mt-3 flex items-end justify-between gap-3">
-          <p className="font-display tabular text-[34px] leading-10 font-semibold">
-            {formatNumber(estimate.kcal)} <span className="text-title">kcal</span>
-          </p>
-          <ConfidenceIndicator level="rough" />
-        </div>
-        <p className="text-body mt-2 text-ink-2">{ROUGH_NOTE}</p>
-        <div className="mt-4 flex flex-col gap-2">
-          <Button onClick={() => onLog(estimate)}>Log as a rough estimate</Button>
-          <Button variant="quiet" onClick={() => setEstimate(null)}>
-            Back
-          </Button>
-        </div>
-      </>
+      <FoodLogPanel
+        food={step.food}
+        confidence={step.confidence}
+        eyebrow={step.confidence === "rough" ? "Rough estimate" : "Typical values"}
+        note={step.confidence === "rough" ? ROUGH_NOTE : undefined}
+        onLog={(servings) => onLog(step.food, servings, step.confidence)}
+        onBack={() => setStep({ name: step.back })}
+      />
     );
   }
 
-  if (searching) {
+  if (step.name === "search") {
     return (
       <>
-        <h1 className="text-title">What did you have?</h1>
-        <label className="mt-3 flex min-h-12 items-center gap-2 rounded-[var(--radius-control)] bg-surface-2 px-3">
-          <SearchIcon className="shrink-0 text-ink-2" width={20} height={20} />
-          <span className="sr-only">Search foods</span>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. latte, banana, pad thai"
-            className="text-body min-w-0 flex-1 bg-transparent placeholder:text-ink-2 focus:outline-none"
-          />
-        </label>
-        <ul className="mt-2 divide-y divide-line" aria-live="polite">
-          {results.map((f) => (
-            <li key={f.name}>
-              <button
-                type="button"
-                onClick={() => onLog(f)}
-                className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="text-headline block">{f.name}</span>
-                  <span className="text-caption text-ink-2">{f.servingLabel}</span>
-                </span>
-                <span className="text-body tabular shrink-0">{formatNumber(f.kcal)} kcal</span>
-              </button>
-            </li>
-          ))}
-          {query.trim() && results.length === 0 && (
-            <li className="text-body py-4 text-ink-2">No foods match. Try another word.</li>
-          )}
-        </ul>
-        {error && (
-          <p role="alert" className="text-body mt-2 text-ink-2">
-            {error}
-          </p>
-        )}
-        <Button variant="quiet" className="mt-2 w-full" onClick={() => setSearching(false)}>
+        <h1 className="text-title mb-3">What did you have?</h1>
+        <FoodSearchPanel
+          autoFocus
+          onPick={(food) => setStep({ name: "food", food, confidence: "good", back: "search" })}
+        />
+        <Button variant="quiet" className="mt-2 w-full" onClick={() => setStep({ name: "dish" })}>
           Back
         </Button>
       </>
@@ -448,27 +359,13 @@ function SomethingNew({
   return (
     <>
       <h1 className="text-title">What kind of dish is it?</h1>
-      <p className="text-body mt-1 text-ink-2">
+      <p className="text-body mt-1 mb-4 text-ink-2">
         Ladle gives a rough estimate for a typical portion. For a better number, import the recipe.
       </p>
-      <div role="group" aria-label="Kind of dish" className="mt-4 flex flex-wrap gap-2">
-        {[...DISH_TYPES.map((d) => d.label), OTHER_DISH].map((label) => (
-          <button
-            key={label}
-            type="button"
-            disabled={busy !== null}
-            onClick={() => void choose(label)}
-            className={chip}
-          >
-            {busy === label ? "…" : label}
-          </button>
-        ))}
-      </div>
-      {error && (
-        <p role="alert" className="text-body mt-3 text-ink-2">
-          {error}
-        </p>
-      )}
+      <DishTypePanel
+        onEstimate={(food) => setStep({ name: "food", food, confidence: "rough", back: "dish" })}
+        onOther={() => setStep({ name: "search" })}
+      />
       <div className="mt-5 flex flex-col gap-2">
         <Button variant="secondary" onClick={onImport}>
           Import a recipe
@@ -524,6 +421,19 @@ function Result({
   function logRough(food: { name: string; kcal: number }) {
     const log = actions.logFood({ name: food.name, kcal: food.kcal, confidence: "rough" });
     finish(`Logged as a rough estimate · ${formatNumber(log.kcal)} kcal`, log.id);
+  }
+
+  function logOther(food: FoodResult, servings: number, confidence: Confidence) {
+    const log = actions.logFood({
+      name: food.name,
+      kcal: food.kcal * servings,
+      confidence,
+      portion: servings,
+    });
+    finish(
+      `${confidence === "rough" ? "Logged as a rough estimate" : `${food.name} logged`} · ${formatNumber(log.kcal)} kcal`,
+      log.id,
+    );
   }
 
   function importDemoRecipe() {
@@ -617,7 +527,7 @@ function Result({
     return (
       <Panel>
         <SomethingNew
-          onLog={logRough}
+          onLog={logOther}
           onImport={() => router.push("/recipes")}
           onPick={() => setMode("pick")}
         />

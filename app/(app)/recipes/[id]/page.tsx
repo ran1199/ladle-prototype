@@ -6,6 +6,7 @@
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BatchSheet } from "@/components/BatchSheet";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { Sheet } from "@/components/Sheet";
@@ -13,7 +14,7 @@ import { useToast } from "@/components/Toast";
 import { BackLink, Button, ButtonLink, Card, ScreenHeader } from "@/components/ui";
 import { formatNumber } from "@/lib/format";
 import { pendingSuggestion } from "@/lib/fixes";
-import { kcalFor, recipeConfidence, sumMacros } from "@/lib/logic";
+import { activeBatch, kcalFor, recipeConfidence, sumMacros } from "@/lib/logic";
 import { actions, useLadle } from "@/lib/store";
 
 function formatDay(iso: string) {
@@ -66,14 +67,27 @@ export default function RecipeCardPage() {
   const per = (n: number) => Math.round(n / recipe.servings);
   const sourceIsLink = recipe.source?.startsWith("http");
 
+  const batch = activeBatch(state.data, recipe.id);
+
   function logServing() {
     if (!recipe) return;
     const log = actions.logRecipe(recipe.id, 1);
     if (!log) return;
     toast({
-      message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal`,
+      message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal${log.batchId ? " · from your batch" : ""}`,
       actionLabel: "Undo",
       onAction: () => actions.deleteLog(log.id),
+    });
+  }
+
+  function cookBatch(servingsMade: number) {
+    if (!recipe) return;
+    const { undo } = actions.startBatch(recipe.id, servingsMade);
+    setBatchOpen(false);
+    toast({
+      message: `Batch started · ${servingsMade} ${servingsMade === 1 ? "serving" : "servings"} in your Pantry`,
+      actionLabel: "Undo",
+      onAction: undo,
     });
   }
 
@@ -156,8 +170,15 @@ export default function RecipeCardPage() {
             Per serving: {per(totals.protein)} g protein · {per(totals.carbs)} g carbs ·{" "}
             {per(totals.fat)} g fat
           </p>
+          {batch && (
+            <p className="text-body tabular mt-3 rounded-[var(--radius-control)] bg-surface-2 px-4 py-3">
+              Active batch: {batch.servingsLeft} of {batch.servingsMade} servings left
+            </p>
+          )}
           <div className="mt-4 flex flex-col gap-2">
-            <Button onClick={logServing}>Log a serving</Button>
+            <Button onClick={logServing}>
+              {batch ? "Log a serving from the batch" : "Log a serving"}
+            </Button>
             <Button variant="secondary" onClick={() => setBatchOpen(true)}>
               Cook as a batch
             </Button>
@@ -186,7 +207,7 @@ export default function RecipeCardPage() {
             </ul>
           </Card>
           <p className="text-caption mt-2 text-ink-2">
-            Ingredient values are AI estimates based on standard nutrition data.
+            Ingredient values are estimates from standard nutrition data.
           </p>
         </section>
 
@@ -226,15 +247,13 @@ export default function RecipeCardPage() {
         </section>
       </div>
 
-      <Sheet open={batchOpen} onClose={() => setBatchOpen(false)} title="Cook as a batch">
-        <p className="text-body">
-          Batch cooking and leftovers arrive in Milestone 7. For now, log a serving each time you
-          eat it.
-        </p>
-        <Button variant="secondary" className="mt-5 w-full" onClick={() => setBatchOpen(false)}>
-          OK
-        </Button>
-      </Sheet>
+      <BatchSheet
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        recipe={recipe}
+        hasActiveBatch={batch !== null}
+        onStart={cookBatch}
+      />
 
       {recipe.photo && (
         <Sheet open={photoOpen} onClose={() => setPhotoOpen(false)} title="Recipe photo">

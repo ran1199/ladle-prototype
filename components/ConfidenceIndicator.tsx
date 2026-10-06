@@ -34,12 +34,25 @@ const LEVELS: Record<
     text: "text-confirmed",
     meaning: `From your recipe, with ${CONFIRMATIONS_NEEDED} or more confirmed logs.`,
   },
+  label: {
+    filled: 3,
+    label: "From the label",
+    dot: "bg-confirmed",
+    text: "text-confirmed",
+    meaning: "From the product’s nutrition label.",
+  },
 };
 
 const AI_NOTE =
   "Ingredient values are estimates from standard nutrition data (approximate USDA values).";
 
 function explanation(level: Confidence, recipe?: Recipe | null, pending = false): string {
+  if (level === "label") {
+    return "From the product’s nutrition label (via Open Food Facts) × the servings you had. Label data always beats an estimate.";
+  }
+  if (level === "good" && !recipe) {
+    return "From typical values for this food and serving size, not your own recipe or a label.";
+  }
   if (level === "rough" || !recipe) {
     return "Estimated from your photo alone, without a recipe, so hidden oil and sauce may be missed.";
   }

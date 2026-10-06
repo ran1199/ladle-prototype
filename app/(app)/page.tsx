@@ -5,24 +5,23 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
+import { LeftoverNudge, StillHaveCard } from "@/components/BatchCards";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { BasketIcon, CameraIcon, RecipesIcon } from "@/components/icons";
 import { LogDetailSheet } from "@/components/LogDetailSheet";
-import { Sheet } from "@/components/Sheet";
-import { useToast } from "@/components/Toast";
-import { Button, Card, ScreenHeader } from "@/components/ui";
+import { Card, ScreenHeader } from "@/components/ui";
 import { formatLongDate, formatNumber, formatTime, isSameDay } from "@/lib/format";
 import {
   formatPortion,
   isFreshBatch,
+  isStaleBatch,
   isReturningAfterBreak,
-  kcalFor,
   MEAL_GROUPS,
   mealGroup,
 } from "@/lib/logic";
 import { clearPlate, getPlate } from "@/lib/plate";
-import { actions, useLadle } from "@/lib/store";
+import { useLadle } from "@/lib/store";
 import type { LogEntry, Recipe } from "@/lib/types";
 
 function BudgetCard({ eaten, target }: { eaten: number; target: number }) {
@@ -167,9 +166,7 @@ function PendingPlateCard() {
 
 export default function TodayPage() {
   const state = useLadle();
-  const toast = useToast();
   const [openLogId, setOpenLogId] = useState<string | null>(null);
-  const [otherFoodOpen, setOtherFoodOpen] = useState(false);
 
   if (!state) return <ScreenHeader title="Today" />;
 
@@ -181,18 +178,9 @@ export default function TodayPage() {
     .sort((a, b) => a.at.localeCompare(b.at));
   const eaten = todays.reduce((s, l) => s + l.kcal, 0);
   const freshBatches = batches.filter((b) => isFreshBatch(b, now));
+  const staleBatches = batches.filter((b) => isStaleBatch(b, now));
   const returning = todays.length === 0 && isReturningAfterBreak(logs, now);
   const openLog = logs.find((l) => l.id === openLogId) ?? null;
-
-  function logBatch(batchId: string, recipe: Recipe) {
-    const log = actions.logRecipe(recipe.id, 1, { batchId });
-    if (!log) return;
-    toast({
-      message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal`,
-      actionLabel: "Undo",
-      onAction: () => actions.deleteLog(log.id),
-    });
-  }
 
   return (
     <>
@@ -214,34 +202,17 @@ export default function TodayPage() {
         <nav aria-label="Quick actions" className="flex gap-2">
           <QuickAction icon={<CameraIcon />} label="Snap a plate" href="/camera" />
           <QuickAction icon={<RecipesIcon />} label="Log a recipe" href="/recipes" />
-          <QuickAction
-            icon={<BasketIcon />}
-            label="Add other food"
-            onClick={() => setOtherFoodOpen(true)}
-          />
+          <QuickAction icon={<BasketIcon />} label="Add other food" href="/add-food" />
         </nav>
+
+        {staleBatches.map((b) => {
+          const recipe = recipeById(b.recipeId);
+          return recipe ? <StillHaveCard key={b.id} batch={b} recipe={recipe} /> : null;
+        })}
 
         {freshBatches.map((b) => {
           const recipe = recipeById(b.recipeId);
-          if (!recipe) return null;
-          return (
-            <Card key={b.id} className="flex items-center gap-3">
-              <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
-              <div className="min-w-0 flex-1">
-                <p className="text-headline">{recipe.name}</p>
-                <p className="text-body tabular text-ink-2">
-                  {b.servingsLeft} {b.servingsLeft === 1 ? "serving" : "servings"} left. Log one?
-                </p>
-              </div>
-              <Button
-                className="shrink-0 px-4"
-                onClick={() => logBatch(b.id, recipe)}
-                aria-label={`Log one serving of ${recipe.name}, ${formatNumber(kcalFor(recipe, 1))} kcal`}
-              >
-                Log
-              </Button>
-            </Card>
-          );
+          return recipe ? <LeftoverNudge key={b.id} batch={b} recipe={recipe} /> : null;
         })}
 
         <section aria-labelledby="meals-heading">
@@ -282,14 +253,6 @@ export default function TodayPage() {
         onClose={() => setOpenLogId(null)}
       />
 
-      <Sheet open={otherFoodOpen} onClose={() => setOtherFoodOpen(false)} title="Add other food">
-        <p className="text-body">
-          Barcode scanning, food search and restaurant photo estimates arrive in Milestone 7.
-        </p>
-        <Button variant="secondary" className="mt-5 w-full" onClick={() => setOtherFoodOpen(false)}>
-          OK
-        </Button>
-      </Sheet>
     </>
   );
 }

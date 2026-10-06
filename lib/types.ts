@@ -3,7 +3,7 @@
 export type Mode = "demo" | "live";
 
 /** How sure Ladle is about a calorie number (shown as 1–3 dots). */
-export type Confidence = "rough" | "good" | "confirmed";
+export type Confidence = "rough" | "good" | "confirmed" | "label";
 
 export type Ingredient = {
   /** The line as written in the recipe, e.g. "2 tbsp neutral oil". */
@@ -89,8 +89,11 @@ export type Batch = {
   id: string;
   recipeId: string;
   cookedAt: string;
+  /** How many servings the pot made (can differ from the recipe's servings). */
   servingsMade: number;
   servingsLeft: number;
+  /** When the user last answered "Yes" to "Still have it?" (keeps it fresh 4 more days). */
+  checkedAt?: string;
 };
 
 export type FixKind = "more-oil" | "less-oil" | "halved" | "swapped" | "other";
