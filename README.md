@@ -28,20 +28,20 @@ You start as Maya, a home cook with six saved recipes and two meals logged today
 
 | Recipe card | Pantry | Add other food | On a laptop |
 | --- | --- | --- | --- |
-| ![Recipe card with totals, servings and ingredients](docs/screenshots/recipe-card.png) | ![Pantry with batches counting down](docs/screenshots/pantry.png) | ![Add other food: barcode, search or restaurant dish](docs/screenshots/add-food.png) | ![The app in a phone frame beside the "Try these" panel](docs/screenshots/desktop.png) |
+| ![Recipe card with totals, servings and ingredients](docs/screenshots/recipe-card.png) | ![Pantry with batches counting down](docs/screenshots/pantry.png) | ![Add other food: barcode, search or restaurant dish](docs/screenshots/add-food.png) | ![The app in a phone frame beside a short about panel](docs/screenshots/desktop.png) |
 
-## Try these
+## Usability test tasks
 
-These are the five usability-test tasks, also listed beside the phone on a laptop.
+The prototype supports these five tasks for moderated sessions:
 
 1. You found a garlic chicken stir-fry video and want to cook it tonight. Add it
-   to Ladle (use the demo link in the side panel or under Recipes → Add recipe).
+   to Ladle (Recipes → Add recipe → Use demo link).
 2. You just cooked the stir-fry. Log what's on your plate (Camera → Use sample photo).
 3. You used extra oil again, like you always do. Fix today's log.
 4. It's Thursday and you're having your usual adobo. Log it.
 5. Add your grandmother's braised pork from her recipe card (Add recipe → Photo → Use example card).
 
-You can also bring your own recipes, links and photos.
+Visitors can also bring their own recipes, links and photos.
 
 ## The AI in this prototype is simulated
 
@@ -94,8 +94,8 @@ data** removes it.
 
 ## Resetting the demo
 
-- **Me → Reset demo** brings back Maya's starting data (the beside-the-phone
-  panel on a laptop has the same button).
+- **Me → Reset demo** brings back Maya's starting data (the panel beside the
+  phone on a laptop has the same button).
 - **Me → Delete all data** empties Ladle completely.
 
 ### Test controls (for usability sessions)

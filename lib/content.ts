@@ -29,17 +29,3 @@ export const HOW_AI_WORKS: string[] = [
   "Plate photos: Ladle can’t see food. It suggests the recipe you most likely made, from what you cooked or opened recently and what you usually eat at this time. The photo only measures your share.",
   "Restaurant meals and snacks use typical values, so they’re always rough estimates.",
 ];
-
-/** The five usability-test tasks, written as friendly prompts for visitors. */
-export const TRY_THESE: { id: string; prompt: string; showDemoLink?: boolean }[] = [
-  {
-    id: "T1",
-    prompt:
-      "You found a garlic chicken stir-fry video and want to cook it tonight. Add it to Ladle.",
-    showDemoLink: true,
-  },
-  { id: "T2", prompt: "You just cooked the stir-fry. Log what’s on your plate." },
-  { id: "T3", prompt: "You used extra oil again, like you always do. Fix today’s log." },
-  { id: "T4", prompt: "It’s Thursday and you’re having your usual adobo. Log it." },
-  { id: "T5", prompt: "Add your grandmother’s braised pork from her recipe card." },
-];

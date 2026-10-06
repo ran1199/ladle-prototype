@@ -1,12 +1,12 @@
 "use client";
 
-// Desktop and tablet only: a calm panel beside the phone with what Ladle is,
-// what to try, and a Reset demo button.
+// Desktop and tablet only: a calm panel beside the phone with what Ladle is
+// and a Reset demo button.
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { actions } from "@/lib/store";
-import { AboutLinks, AboutSummary, TryThese } from "./AboutContent";
+import { AboutLinks, AboutSummary } from "./AboutContent";
 import { LadleMark } from "./icons";
 import { Button } from "./ui";
 
@@ -34,9 +34,6 @@ export function SidePanel({ caseStudyUrl }: { caseStudyUrl: string }) {
       <div className="mt-5">
         <AboutSummary />
       </div>
-
-      <h2 className="text-title mt-8 mb-4">Try these</h2>
-      <TryThese />
 
       <div className="mt-8 border-t border-line pt-5">
         {!confirming ? (

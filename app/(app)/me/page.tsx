@@ -6,7 +6,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AboutLinks, AboutSummary, TryThese } from "@/components/AboutContent";
+import { AboutLinks, AboutSummary } from "@/components/AboutContent";
 import { ChevronIcon } from "@/components/icons";
 import { ProfileSheet } from "@/components/ProfileSheet";
 import { Sheet } from "@/components/Sheet";
@@ -157,8 +157,6 @@ export default function MePage() {
 
       <Sheet open={aboutOpen} onClose={() => setAboutOpen(false)} title="About this prototype">
         <AboutSummary />
-        <h3 className="text-headline mt-6 mb-3">Try these</h3>
-        <TryThese />
         <div className="mt-6">
           <AboutLinks caseStudyUrl={caseStudyUrl} />
         </div>
