@@ -4,30 +4,21 @@
 // analysis starts, so nothing is lost if the network fails or the app closes.
 // It is deleted once the meal is logged: Ladle doesn't keep plate photos.
 
+import type { PlateAnalysis } from "./ai/schemas";
 import { storage } from "./storage";
+import type { PhotoColor } from "./types";
 
 const KEY = "ladle:plate:v1";
 
-/** Same shape the Milestone 6 /api/analyze-plate route returns (plus the Demo-only rough guess). */
-export type PlateResult = {
-  matchRecipeId: string | null;
-  matchConfidence: number;
-  alternatives: string[];
-  portionServings: number;
-  portionReason: string;
-  isNewFood: boolean;
-  /** A photo-only guess, for "It's something new". */
-  roughGuess?: { name: string; kcal: number } | null;
-  /** The dish looks like a recipe the user could import (Demo: the stir-fry before T1). */
-  suggestImport?: boolean;
-};
+/** The plate analysis (same shape every AI engine returns). */
+export type PlateResult = PlateAnalysis;
 
 export type PendingPlate = {
   id: string;
   takenAt: string;
-  photo: { src: string; alt: string; isSample: boolean };
+  photo: { src: string; alt: string; isSample: boolean; color?: PhotoColor };
   status: "analyzing" | "failed" | "ready";
-  /** Null while analyzing, or when Demo mode can't analyze the user's own photo. */
+  /** Null while analyzing. */
   result: PlateResult | null;
 };
 
@@ -57,9 +48,14 @@ export function newPlate(photo: PendingPlate["photo"]): PendingPlate {
 
 const MAX_EDGE = 1200;
 
-/** Downscales an image to about 1,200 px on the long edge and returns a JPEG data URL. */
-export async function downscale(source: CanvasImageSource, width: number, height: number) {
-  const scale = Math.min(1, MAX_EDGE / Math.max(width, height));
+/** Downscales an image to about 1,200 px (or `maxEdge`) on the long edge and returns a JPEG data URL. */
+export async function downscale(
+  source: CanvasImageSource,
+  width: number,
+  height: number,
+  maxEdge = MAX_EDGE,
+) {
+  const scale = Math.min(1, maxEdge / Math.max(width, height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
@@ -70,7 +66,7 @@ export async function downscale(source: CanvasImageSource, width: number, height
 }
 
 /** Reads a chosen photo file and downscales it. Rejects anything that isn't an image or is over 10 MB. */
-export async function readPhotoFile(file: File): Promise<string> {
+export async function readPhotoFile(file: File, maxEdge = MAX_EDGE): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("not-image");
   if (file.size > 10 * 1024 * 1024) throw new Error("too-big");
   const url = URL.createObjectURL(file);
@@ -78,8 +74,53 @@ export async function readPhotoFile(file: File): Promise<string> {
     const img = new Image();
     img.src = url;
     await img.decode();
-    return await downscale(img, img.naturalWidth, img.naturalHeight);
+    return await downscale(img, img.naturalWidth, img.naturalHeight, maxEdge);
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+/** Shrinks an image (URL or data URL) to `maxEdge` px, e.g. to store a small copy. */
+export async function shrinkImage(src: string, maxEdge: number): Promise<string> {
+  const img = new Image();
+  img.src = src;
+  await img.decode();
+  return downscale(img, img.naturalWidth, img.naturalHeight, maxEdge);
+}
+
+/**
+ * The photo's average colour, measured on an 8×8 copy. Plate matching uses it
+ * as a light hint (a similar-looking photo of the same dish logged before).
+ */
+export async function averageColor(src: string): Promise<PhotoColor | undefined> {
+  try {
+    const img = new Image();
+    img.src = src;
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return undefined;
+    ctx.drawImage(img, 0, 0, 8, 8);
+    const px = ctx.getImageData(0, 0, 8, 8).data;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    for (let i = 0; i < px.length; i += 4) {
+      r += px[i];
+      g += px[i + 1];
+      b += px[i + 2];
+    }
+    const n = px.length / 4;
+    return { r: Math.round(r / n), g: Math.round(g / n), b: Math.round(b / n) };
+  } catch {
+    return undefined;
+  }
+}
+
+/** A photo (data URL or same-site URL) as a Blob, for the AI engine. */
+export async function photoBlob(src: string): Promise<Blob> {
+  const res = await fetch(src);
+  return res.blob();
 }

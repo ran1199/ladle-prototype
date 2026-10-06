@@ -1,8 +1,11 @@
-// Demo mode: scripted, instant-feeling answers for the demo inputs, the same for
-// every visitor and free (no AI calls). Values come from the project brief.
+// The scripted engine: fixed answers for the bundled demo inputs (the demo
+// video link, the demo caption, Grandma's recipe card, the sample plate photo),
+// so the five usability-test tasks behave identically for every participant.
+// Values come from the project brief. Everything else goes to the mock engine.
 
-import { DEMO_LINK } from "./content";
-import type { ExtractResult, ImportSource } from "./importTypes";
+import { DEMO_LINK } from "../content";
+import type { ExtractedRecipe, PlateAnalysis } from "./schemas";
+import type { DemoAsset, ExtractInput, RecipeSummary } from "./types";
 
 export const DEMO_CAPTION = `Garlic chicken stir-fry 🧄 serves 4
 600g boneless skinless chicken thighs
@@ -17,9 +20,17 @@ oil for frying`;
 export const DEMO_CARD = {
   src: "/demo/recipe-card.jpg",
   alt: "Handwritten recipe card: Grandma’s braised pork. 500g pork belly, 4 eggs, 3 tbsp soy sauce, 30g rock sugar, 2 tbsp Shaoxing wine, ginger + 2 star anise, a little oil. Feeds 6.",
+  demoAsset: "recipe-card" as DemoAsset,
 };
 
-const STIR_FRY: ExtractResult = {
+/** The bundled sample plate photo (Ran’s own photo; metadata removed). */
+export const DEMO_PLATE = {
+  src: "/demo/plate-stir-fry.jpg",
+  alt: "A bowl of chicken with broccoli, mushrooms, garlic and peppers, held over a kitchen counter.",
+  demoAsset: "sample-plate" as DemoAsset,
+};
+
+const STIR_FRY: ExtractedRecipe = {
   name: "Garlic chicken stir-fry",
   servings: 4,
   servingsConfidence: "stated",
@@ -47,7 +58,7 @@ const STIR_FRY: ExtractResult = {
   ],
 };
 
-const BRAISED_PORK: ExtractResult = {
+const BRAISED_PORK: ExtractedRecipe = {
   name: "Grandma’s braised pork",
   servings: 6,
   servingsConfidence: "stated",
@@ -115,30 +126,29 @@ const SOCIAL_HOSTS = [
 ];
 
 export type LinkCheck =
-  | { ok: true; url: string }
-  | { ok: false; reason: "invalid" | "social" | "needs-live" };
+  | { ok: true; url: string; isDemo: boolean }
+  | { ok: false; reason: "invalid" | "social" };
 
 function sameLink(a: URL, b: URL): boolean {
   const clean = (u: URL) => `${u.hostname.replace(/^www\./, "")}${u.pathname.replace(/\/$/, "")}`;
   return clean(a) === clean(b);
 }
 
-/** Decides what Demo mode can do with a pasted link. */
-export function checkDemoLink(input: string): LinkCheck {
+/** Sorts a pasted link: the demo video, another video (ask for the caption), or a website. */
+export function checkLink(input: string): LinkCheck {
   let url: URL;
   try {
     url = new URL(input.trim());
   } catch {
     return { ok: false, reason: "invalid" };
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:")
-    return { ok: false, reason: "invalid" };
-  if (sameLink(url, new URL(DEMO_LINK))) return { ok: true, url: DEMO_LINK };
+  if (url.protocol !== "https:" && url.protocol !== "http:") return { ok: false, reason: "invalid" };
+  if (sameLink(url, new URL(DEMO_LINK))) return { ok: true, url: DEMO_LINK, isDemo: true };
   const host = url.hostname.replace(/^www\.|^m\./, "");
   if (SOCIAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
     return { ok: false, reason: "social" };
   }
-  return { ok: false, reason: "needs-live" };
+  return { ok: true, url: url.toString(), isDemo: false };
 }
 
 /** True if pasted text is the demo caption (ignoring spacing, emoji and case). */
@@ -156,41 +166,20 @@ export function isDemoCaption(text: string): boolean {
   );
 }
 
-/** Returns the scripted extraction for a demo input, or null if Demo mode can't read it. */
-export function demoResultFor(source: ImportSource): ExtractResult | null {
-  if (source.kind === "link") return checkDemoLink(source.url).ok ? STIR_FRY : null;
-  if (source.kind === "text") return isDemoCaption(source.text) ? STIR_FRY : null;
-  return source.isExample ? BRAISED_PORK : null;
+/** The scripted answer for a demo recipe input, or null if it isn't one. */
+export function scriptedExtract(input: ExtractInput): ExtractedRecipe | null {
+  if (input.kind === "text") {
+    if (input.sourceUrl === DEMO_LINK || isDemoCaption(input.text)) return STIR_FRY;
+    return null;
+  }
+  return input.demoAsset === "recipe-card" ? BRAISED_PORK : null;
 }
-
-/** Waits a realistic 1.5–2 seconds, as if the recipe were being read. */
-export function demoDelay(signal?: AbortSignal): Promise<void> {
-  const ms = 1500 + Math.random() * 500;
-  return new Promise((resolve, reject) => {
-    const t = setTimeout(resolve, ms);
-    signal?.addEventListener("abort", () => {
-      clearTimeout(t);
-      reject(new DOMException("Cancelled", "AbortError"));
-    });
-  });
-}
-
-/** The bundled sample plate photo (Ran’s own photo; metadata removed). */
-export const DEMO_PLATE = {
-  src: "/demo/plate-stir-fry.jpg",
-  alt: "A bowl of chicken with broccoli, mushrooms, garlic and peppers, held over a kitchen counter.",
-};
 
 /**
- * Scripted plate analysis. The sample photo matches the garlic chicken stir-fry
- * (about 1 serving) once it's saved; before that, Ladle suggests importing it.
- * Returns null for the user's own photos, which need Live AI.
+ * The scripted plate answer for the sample photo: it matches the garlic chicken
+ * stir-fry (about 1 serving) once it's saved; before that, Ladle suggests importing it.
  */
-export function demoAnalyzePlate(
-  isSample: boolean,
-  recipes: { id: string; key?: string }[],
-): import("./plate").PlateResult | null {
-  if (!isSample) return null;
+export function scriptedPlate(recipes: RecipeSummary[]): PlateAnalysis {
   const stirFry = recipes.find((r) => r.key === "garlic-chicken-stir-fry");
   const others = ["tomato-egg-stir-fry", "kimchi-fried-rice"].filter((id) =>
     recipes.some((r) => r.id === id),

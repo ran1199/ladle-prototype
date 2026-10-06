@@ -13,8 +13,22 @@ export const SUMMARY =
 export const DISCLAIMER = "This is a prototype for research, not medical or nutrition advice.";
 
 export const PRIVACY =
-  "In Demo mode nothing leaves your browser. In Live AI mode, photos and recipe text are sent to " +
-  "Anthropic’s API for analysis and are not stored by Ladle.";
+  "Ladle runs in your browser and your data stays on this device. Recipe links are fetched by " +
+  "Ladle’s server to read the ingredients, and barcode lookups go to Open Food Facts. Nothing is " +
+  "stored on a server.";
+
+/** What the "Prototype" pill explains. */
+export const PROTOTYPE_NOTE =
+  "Ladle’s AI is simulated by a script in this prototype. It reads your recipe text and uses your " +
+  "history to suggest matches. A real AI would be added in a future version.";
+
+/** How the simulated AI works, in plain words (Me tab and side panel). */
+export const HOW_AI_WORKS: string[] = [
+  "Recipes: Ladle reads each ingredient line, works out the amount, and looks it up in a built-in table of about 200 common ingredients (approximate USDA values). Vague amounts that matter, like “oil for frying”, become a question.",
+  "Recipe photos: text recognition runs on your device, then the same reader takes over. If it can’t read the photo well, you can fix the text.",
+  "Plate photos: Ladle can’t see food. It suggests the recipe you most likely made, from what you cooked or opened recently and what you usually eat at this time. The photo only measures your share.",
+  "Restaurant meals and snacks use typical values, so they’re always rough estimates.",
+];
 
 /** The five usability-test tasks, written as friendly prompts for visitors. */
 export const TRY_THESE: { id: string; prompt: string; showDemoLink?: boolean }[] = [

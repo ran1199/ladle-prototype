@@ -36,7 +36,8 @@ const LEVELS: Record<
   },
 };
 
-const AI_NOTE = "Ingredient values are AI estimates based on standard nutrition data.";
+const AI_NOTE =
+  "Ingredient values are estimates from standard nutrition data (approximate USDA values).";
 
 function explanation(level: Confidence, recipe?: Recipe | null, pending = false): string {
   if (level === "rough" || !recipe) {

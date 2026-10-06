@@ -5,7 +5,7 @@
 
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { Sheet } from "@/components/Sheet";
@@ -35,6 +35,11 @@ export default function RecipeCardPage() {
   const toast = useToast();
   const [batchOpen, setBatchOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
+
+  // Opening a recipe is a hint for plate matching ("probably cooking this tonight").
+  useEffect(() => {
+    actions.markOpened(id);
+  }, [id]);
 
   const back = <BackLink href="/recipes" label="Recipes" />;
   if (!state) return <ScreenHeader title="" leading={back} />;
@@ -126,6 +131,7 @@ export default function RecipeCardPage() {
             <Image
               src={recipe.photo.src}
               alt={recipe.photo.alt}
+              unoptimized={recipe.photo.src.startsWith("data:")}
               width={1200}
               height={860}
               className="h-auto w-full"
@@ -235,6 +241,7 @@ export default function RecipeCardPage() {
           <Image
             src={recipe.photo.src}
             alt={recipe.photo.alt}
+            unoptimized={recipe.photo.src.startsWith("data:")}
             width={1200}
             height={860}
             className="h-auto w-full rounded-[var(--radius-control)]"

@@ -17,7 +17,7 @@ export const FIX_KINDS: { kind: FixKind; label: string }[] = [
 
 const OIL_TBSP = { kcal: 120, fat: 14 };
 
-/** Swaps Demo mode knows about: ingredient → lighter or different choice, with a kcal factor. */
+/** Swaps Ladle knows about: ingredient → lighter or different choice, with a kcal factor. */
 const SWAPS: { from: string; to: string; factor: number }[] = [
   { from: "chicken thighs", to: "chicken breast", factor: 0.85 },
   { from: "honey", to: "no honey", factor: 0 },
@@ -29,7 +29,7 @@ const SWAPS: { from: string; to: string; factor: number }[] = [
   { from: "Greek yogurt", to: "skyr", factor: 0.9 },
 ];
 
-/** "Something else" examples for Demo mode (calories for this plate). */
+/** "Something else" examples shown as chips under the text box (calories for this plate). */
 export const OTHER_PRESETS: { detail: string; label: string; kcal: number; note: string }[] = [
   { detail: "cheese", label: "Added cheese on top", kcal: 110, note: "about 30 g cheddar" },
   { detail: "fried-egg", label: "Added a fried egg", kcal: 90, note: "one large egg" },
@@ -150,8 +150,43 @@ export function fixOptions(
   });
 }
 
+const CUSTOM = "custom:";
+
+/**
+ * A "Something else" fix described in the user's own words, e.g. "added 30g cheddar".
+ * Stored as "custom:<kcal per serving>:<summary>" so it can be rebuilt later.
+ */
+export function customOption(
+  recipe: Recipe | null,
+  portion: number,
+  kcalPerServing: number,
+  summary: string,
+): FixOption {
+  const perServing = Math.round(kcalPerServing);
+  const plateDelta = Math.round(perServing * portion);
+  return {
+    kind: "other",
+    detail: `${CUSTOM}${perServing}:${summary}`,
+    chip: `${summary} · ${signed(plateDelta)}`,
+    label: summary,
+    plateDelta,
+    potDelta: recipe ? perServing * recipe.servings : null,
+    alwaysNote: recipe ? `${summary.charAt(0).toLowerCase()}${summary.slice(1)} every time` : null,
+  };
+}
+
+function parseCustom(detail: string): { kcalPerServing: number; summary: string } | null {
+  if (!detail.startsWith(CUSTOM)) return null;
+  const rest = detail.slice(CUSTOM.length);
+  const colon = rest.indexOf(":");
+  const kcal = Number(rest.slice(0, colon));
+  return colon > 0 && Number.isFinite(kcal) ? { kcalPerServing: kcal, summary: rest.slice(colon + 1) } : null;
+}
+
 /** Rebuilds an option from a stored fix (for suggestions and "Update recipe"). */
 export function optionFor(recipe: Recipe, kind: FixKind, detail: string): FixOption | null {
+  const custom = kind === "other" ? parseCustom(detail) : null;
+  if (custom) return customOption(recipe, 1, custom.kcalPerServing, custom.summary);
   const base = kcalFor(recipe, 1);
   return fixOptions(kind, recipe, 1, base).find((o) => o.detail === detail) ?? null;
 }
@@ -254,8 +289,11 @@ const SUGGESTION_TEXT: Record<FixKind, (detail: string) => string> = {
   "less-oil": () => "You usually use less oil in this. Update your recipe?",
   halved: () => "You usually cook a half batch of this. Update your recipe?",
   swapped: (d) => `You usually use ${d.split(">")[1]} in this. Update your recipe?`,
-  other: (d) =>
-    `You usually ${(OTHER_PRESETS.find((p) => p.detail === d)?.label ?? "change this").toLowerCase()}. Update your recipe?`,
+  other: (d) => {
+    const custom = parseCustom(d);
+    if (custom) return `You’ve made this change before: “${custom.summary}”. Update your recipe?`;
+    return `You usually ${(OTHER_PRESETS.find((p) => p.detail === d)?.label ?? "change this").toLowerCase()}. Update your recipe?`;
+  },
 };
 
 /**

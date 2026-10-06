@@ -89,7 +89,7 @@ export function addRecipeLog(
   data: AppData,
   recipeId: string,
   portion: number,
-  opts: { batchId?: string; at?: Date } = {},
+  opts: { batchId?: string; at?: Date; photoColor?: LogEntry["photoColor"] } = {},
 ): { data: AppData; log: LogEntry | null } {
   const recipe = data.recipes.find((r) => r.id === recipeId);
   if (!recipe) return { data, log: null };
@@ -105,6 +105,7 @@ export function addRecipeLog(
     confidence: recipeConfidence(recipe, data.fixes),
     countedConfirmation: true,
     prevLastEatenAt: recipe.lastEatenAt,
+    ...(opts.photoColor ? { photoColor: opts.photoColor } : {}),
   };
   return {
     log,

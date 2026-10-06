@@ -2,7 +2,7 @@
 // Dates are relative to the visitor's today. Ingredient kcal values add up exactly to
 // each recipe's total (kcal per serving × servings); macros are approximate.
 
-import type { AppData, Ingredient, Recipe } from "./types";
+import type { AppData, Ingredient, LogEntry, Recipe } from "./types";
 
 /** Short helper for ingredient rows: [text, quantity, unit, item, kcal, protein, carbs, fat]. */
 function ing(
@@ -53,6 +53,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 9,
       usualPortion: 1,
+      mealTypes: ["dinner"],
       illustration: "pot",
       source: null,
       lastEatenAt: daysAgo(now, lastAdobo, 19, 15),
@@ -74,6 +75,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 14,
       usualPortion: 1,
+      mealTypes: ["breakfast"],
       illustration: "jar",
       source: null,
       lastEatenAt: daysAgo(now, 0, 8, 10),
@@ -101,6 +103,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 6,
       usualPortion: 1,
+      mealTypes: ["lunch", "dinner"],
       illustration: "bowl",
       source: null,
       lastEatenAt: daysAgo(now, 0, 12, 40),
@@ -123,6 +126,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 5,
       usualPortion: 1,
+      mealTypes: ["dinner", "lunch"],
       illustration: "plate",
       source: null,
       lastEatenAt: daysAgo(now, 3, 18, 45),
@@ -146,6 +150,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 1,
       usualPortion: 1,
+      mealTypes: ["lunch", "dinner"],
       illustration: "bowl",
       source: null,
       lastEatenAt: daysAgo(now, 5, 19, 30),
@@ -173,6 +178,7 @@ export function buildSeed(now: Date = new Date()): AppData {
       ],
       confirmedLogs: 2,
       usualPortion: 1,
+      mealTypes: ["dinner", "lunch"],
       illustration: "pot",
       source: null,
       lastEatenAt: daysAgo(now, 9, 19, 0),
@@ -186,6 +192,7 @@ export function buildSeed(now: Date = new Date()): AppData {
     profile: { name: "Maya", sex: "female", dailyTarget: 1600, startingWeightKg: null },
     recipes,
     logs: [
+      ...history(now, lastAdobo, recipes),
       {
         id: "seed-log-oats",
         at: daysAgo(now, 0, 8, 10),
@@ -234,6 +241,44 @@ export function buildSeed(now: Date = new Date()): AppData {
       },
     ],
   };
+}
+
+/**
+ * Maya's earlier meals (not shown on Today). They give plate matching some
+ * history to work with: adobo on Thursday evenings, oats in the mornings, and
+ * so on. They don't count towards "Your recipe ✓" (already in confirmedLogs).
+ */
+function history(now: Date, lastAdobo: number, recipes: Recipe[]): LogEntry[] {
+  const meals: [recipeId: string, days: number, hour: number, minute: number][] = [
+    ["chicken-adobo", lastAdobo, 19, 15],
+    ["chicken-adobo", lastAdobo + 7, 19, 5],
+    ["chicken-adobo", lastAdobo + 14, 19, 30],
+    ["chicken-adobo", lastAdobo + 21, 19, 10],
+    ["overnight-oats", 1, 8, 5],
+    ["overnight-oats", 2, 7, 50],
+    ["overnight-oats", 4, 8, 20],
+    ["overnight-oats", 6, 8, 0],
+    ["turkey-chili", 1, 19, 0],
+    ["tomato-egg-stir-fry", 3, 18, 45],
+    ["tomato-egg-stir-fry", 11, 19, 0],
+    ["kimchi-fried-rice", 5, 19, 30],
+    ["lentil-dal", 9, 19, 0],
+    ["lentil-dal", 16, 13, 0],
+  ];
+  return meals.map(([recipeId, days, hour, minute], i) => {
+    const recipe = recipes.find((r) => r.id === recipeId)!;
+    return {
+      id: `seed-history-${i}`,
+      at: daysAgo(now, days, hour, minute),
+      name: recipe.name,
+      recipeId,
+      batchId: null,
+      portion: 1,
+      kcal: recipeKcalPerServing(recipe),
+      confidence: "confirmed",
+      countedConfirmation: false,
+    };
+  });
 }
 
 /** Total kcal for a recipe (sum of its ingredients). */

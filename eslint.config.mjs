@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // On-device text recognition files copied from node_modules at build time.
+    "public/tesseract/**",
   ]),
 ]);
 

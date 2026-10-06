@@ -185,7 +185,7 @@ export default function TodayPage() {
   const openLog = logs.find((l) => l.id === openLogId) ?? null;
 
   function logBatch(batchId: string, recipe: Recipe) {
-    const log = actions.logRecipe(recipe.id, 1, batchId);
+    const log = actions.logRecipe(recipe.id, 1, { batchId });
     if (!log) return;
     toast({
       message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal`,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { ModeBadge } from "./ModeBadge";
+import { PrototypeBadge } from "./PrototypeBadge";
 
 type Variant = "primary" | "secondary" | "quiet";
 
@@ -64,7 +64,7 @@ export function Card({
   );
 }
 
-/** Top of every screen: the Demo / Live AI badge, then a large title. */
+/** Top of every screen: the Prototype badge, then a large title. */
 export function ScreenHeader({
   title,
   subtitle,
@@ -79,7 +79,7 @@ export function ScreenHeader({
     <header className="px-5 pb-4" style={{ paddingTop: "calc(var(--safe-top) + 8px)" }}>
       <div className="flex h-8 items-center justify-between">
         <div className="-ml-2">{leading}</div>
-        <ModeBadge />
+        <PrototypeBadge />
       </div>
       <h1 className="text-large-title mt-1">{title}</h1>
       {subtitle && <p className="text-body mt-1 text-ink-2">{subtitle}</p>}

@@ -1,16 +1,16 @@
 "use client";
 
 // "Add a recipe" sheet (F3): paste a link, paste text, or a photo of a written recipe.
-// Demo mode reads the demo link, the demo caption and the example recipe card;
-// anything else gets a friendly explanation.
+// The demo link, caption and example card give the scripted results; anything
+// else is read by Ladle's simulated AI.
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState } from "react";
+import { checkLink, DEMO_CAPTION, DEMO_CARD } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
-import { checkDemoLink, DEMO_CAPTION, DEMO_CARD, isDemoCaption } from "@/lib/demo";
 import { startDraft } from "@/lib/draft";
+import { readPhotoFile } from "@/lib/plate";
 import { Sheet } from "./Sheet";
 import { Button } from "./ui";
 
@@ -76,31 +76,15 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
   }
 
   function submitLink() {
-    const check = checkDemoLink(url);
+    const check = checkLink(url);
     if (check.ok) return go({ kind: "link", url: check.url });
     if (check.reason === "invalid") {
       setNotice("That doesn’t look like a link. Check it and try again.");
-    } else if (check.reason === "social") {
+    } else {
       // Don't open videos: switch to text, keeping the link as the source.
       setSavedLink(url.trim());
       setMethod("text");
       setNotice("Ladle can’t open videos yet. Paste the caption or the recipe text instead.");
-    } else {
-      setNotice(
-        <>
-          <p>Importing from recipe websites needs Live AI. In Demo mode, try the demo link.</p>
-          <Button
-            variant="secondary"
-            className="mt-3 w-full"
-            onClick={() => {
-              setUrl(DEMO_LINK);
-              setNotice(null);
-            }}
-          >
-            Use the demo link
-          </Button>
-        </>,
-      );
     }
   }
 
@@ -109,30 +93,24 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
       setNotice("Paste a caption or the recipe text first.");
       return;
     }
-    if (isDemoCaption(text)) return go({ kind: "text", text, link: savedLink ?? undefined });
-    setNotice(
-      <>
-        <p>
-          Live AI is needed to read your own recipes. In Demo mode, tap &ldquo;Use example&rdquo; to
-          try the stir-fry caption.
-        </p>
-        <Link
-          href="/me"
-          onClick={onClose}
-          className="text-headline mt-2 inline-flex min-h-11 items-center text-accent-strong underline-offset-4 hover:underline"
-        >
-          I have an access code
-        </Link>
-      </>,
-    );
+    go({ kind: "text", text, link: savedLink ?? undefined });
   }
 
-  function onPhotoChosen() {
-    if (!fileRef.current?.files?.length) return;
-    fileRef.current.value = "";
-    setNotice(
-      "Reading your own recipe photos needs Live AI. In Demo mode, try the example card below.",
-    );
+  async function onPhotoChosen() {
+    const file = fileRef.current?.files?.[0];
+    if (fileRef.current) fileRef.current.value = "";
+    if (!file) return;
+    try {
+      // Text reads best at about 1,600 px; the photo stays on this device.
+      const src = await readPhotoFile(file, 1600);
+      go({ kind: "photo", src, alt: "Your recipe photo", isExample: false });
+    } catch (err) {
+      setNotice(
+        err instanceof Error && err.message === "too-big"
+          ? "That photo is over 10 MB. Try a smaller one."
+          : "Ladle couldn’t open that file. Choose a photo instead.",
+      );
+    }
   }
 
   return (
@@ -242,7 +220,8 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
         {method === "photo" && (
           <div>
             <p className="text-body text-ink-2">
-              A handwritten card or a cookbook page. Ladle reads each line for you to check.
+              A cookbook page or a recipe card. Ladle reads each line on your phone for you to
+              check. Printed recipes read best.
             </p>
             <label className="text-headline mt-4 flex min-h-12 cursor-pointer items-center justify-center rounded-[var(--radius-control)] bg-surface-2 px-5 focus-within:outline-3 focus-within:outline-accent-strong">
               Take or choose a photo

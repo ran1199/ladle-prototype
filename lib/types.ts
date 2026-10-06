@@ -52,8 +52,17 @@ export type Recipe = {
   photo?: { src: string; alt: string } | null;
   lastEatenAt: string | null;
   createdAt: string;
+  /** When the recipe card was last opened (a hint for plate matching). */
+  lastOpenedAt?: string | null;
+  /** Usual meals for this dish (a hint for plate matching), e.g. ["breakfast"]. */
+  mealTypes?: MealType[];
   history: ChangeEntry[];
 };
+
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+
+/** A photo's average colour (0–255 per channel). */
+export type PhotoColor = { r: number; g: number; b: number };
 
 export type LogEntry = {
   id: string;
@@ -72,6 +81,8 @@ export type LogEntry = {
   prevLastEatenAt?: string | null;
   /** "Just this time" quick fixes; their calories are included in `kcal`. */
   adjustments?: LogAdjustment[];
+  /** Average colour of the plate photo it was logged from (kept instead of the photo). */
+  photoColor?: PhotoColor;
 };
 
 export type Batch = {

@@ -18,7 +18,7 @@ import {
 import type { FixOption, Suggestion } from "./fixes";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
-import type { AppData, Confidence, LogEntry, Prefs } from "./types";
+import type { AppData, Confidence, LogEntry, PhotoColor, Prefs } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
@@ -32,8 +32,13 @@ const listeners = new Set<() => void>();
 
 /** Brings data saved by an earlier version of the prototype up to date. */
 function upgrade(data: AppData): AppData {
+  // Milestone 6 added meal types to Maya's recipes (a hint for plate matching).
+  const seedMeals = new Map(buildSeed().recipes.map((r) => [r.id, r.mealTypes]));
   return {
     ...data,
+    recipes: data.recipes.map((r) =>
+      r.mealTypes || !seedMeals.get(r.id) ? r : { ...r, mealTypes: seedMeals.get(r.id) },
+    ),
     // Milestone 5 added `detail` to fixes; the seeded one is "+1 tbsp" of oil.
     fixes: data.fixes.map((f) =>
       f.detail ? f : { ...f, detail: f.kind === "more-oil" ? "+1 tbsp" : "" },
@@ -99,10 +104,14 @@ export const actions = {
     setPrefs({ welcomeDismissed: true });
   },
   /** Log a portion of a saved recipe to today (optionally from a batch). */
-  logRecipe(recipeId: string, portion: number, batchId?: string): LogEntry | null {
+  logRecipe(
+    recipeId: string,
+    portion: number,
+    opts: { batchId?: string; photoColor?: PhotoColor } = {},
+  ): LogEntry | null {
     let created: LogEntry | null = null;
     setData((data) => {
-      const result = addRecipeLog(data, recipeId, portion, { batchId });
+      const result = addRecipeLog(data, recipeId, portion, opts);
       created = result.log;
       return result.data;
     });
@@ -144,6 +153,15 @@ export const actions = {
   /** "Update recipe" (accept) or "Not now". */
   resolveSuggestion(recipeId: string, suggestion: Suggestion, accept: boolean) {
     setData((data) => resolveSuggestion(data, recipeId, suggestion, accept));
+  },
+  /** Remember that a recipe card was opened (plate matching ranks it higher for a few hours). */
+  markOpened(recipeId: string) {
+    setData((data) => ({
+      ...data,
+      recipes: data.recipes.map((r) =>
+        r.id === recipeId ? { ...r, lastOpenedAt: new Date().toISOString() } : r,
+      ),
+    }));
   },
   /** Delete a log (also used for Undo). */
   deleteLog(logId: string) {

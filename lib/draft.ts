@@ -61,7 +61,7 @@ export function reviewFromResult(result: ExtractResult): ReviewState {
     servings: result.servings,
     ingredients: result.ingredients.map((i, index) => ({
       uid: `ing-${index}`,
-      qid: result.questions.find((q) => q.ingredientIndex === index)?.id,
+      qid: result.questions.find((q) => q.kind !== "servings" && q.ingredientIndex === index)?.id,
       text: i.text,
       quantity: i.quantity,
       unit: i.unit,
@@ -73,6 +73,7 @@ export function reviewFromResult(result: ExtractResult): ReviewState {
       fat: i.fat,
       vague: i.vague,
       unreadable: i.unreadable,
+      ...(i.estimated ? { estimated: true } : {}),
     })),
     answers: {},
   };

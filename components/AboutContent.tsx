@@ -1,7 +1,14 @@
 // The "About this prototype" content: shown in the desktop side panel and,
 // on phones, in Me → About this prototype.
 
-import { DEMO_LINK, DISCLAIMER, REPO_URL, SUMMARY, TRY_THESE } from "@/lib/content";
+import {
+  DEMO_LINK,
+  DISCLAIMER,
+  PROTOTYPE_NOTE,
+  REPO_URL,
+  SUMMARY,
+  TRY_THESE,
+} from "@/lib/content";
 import { CopyChip } from "./CopyChip";
 import { ExternalIcon } from "./icons";
 
@@ -51,6 +58,7 @@ export function AboutSummary() {
   return (
     <>
       <p className="text-body">{SUMMARY}</p>
+      <p className="text-body mt-3">{PROTOTYPE_NOTE}</p>
       <p className="text-caption mt-3 text-ink-2">{DISCLAIMER}</p>
     </>
   );

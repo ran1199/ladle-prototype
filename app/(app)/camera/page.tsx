@@ -11,27 +11,31 @@ import { useEffect, useRef, useState } from "react";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { CameraIcon, CloseIcon, SearchIcon } from "@/components/icons";
-import { ModeBadge } from "@/components/ModeBadge";
+import { PrototypeBadge } from "@/components/PrototypeBadge";
 import { PortionPicker } from "@/components/PortionPicker";
 import { QuickFixSheet } from "@/components/QuickFixSheet";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui";
+import { ai, AIError, type FoodResult, type PlateContext, type RecipeSummary } from "@/lib/ai";
+import { DEMO_PLATE } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
-import { DEMO_PLATE, demoAnalyzePlate, demoDelay } from "@/lib/demo";
+import { DISH_TYPES, OTHER_DISH } from "@/lib/mock-ai/restaurant";
 import { startDraft } from "@/lib/draft";
 import { formatNumber } from "@/lib/format";
 import { formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
 import {
+  averageColor,
   clearPlate,
   downscale,
   getPlate,
   newPlate,
+  photoBlob,
   readPhotoFile,
   savePlate,
   type PendingPlate,
 } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
-import type { Fix, Recipe } from "@/lib/types";
+import type { AppData, Fix, Recipe } from "@/lib/types";
 
 /* ---------- Top bar ---------- */
 
@@ -51,7 +55,7 @@ function TopBar({ onClose, dark }: { onClose: () => void; dark: boolean }) {
       >
         <CloseIcon />
       </button>
-      <ModeBadge />
+      <PrototypeBadge />
     </div>
   );
 }
@@ -185,7 +189,10 @@ function Capture({
       )}
 
       <div className="px-4 pt-4" style={{ paddingBottom: "calc(var(--safe-bottom) + 16px)" }}>
-        <Button className="w-full" onClick={() => onPhoto({ ...DEMO_PLATE, isSample: true })}>
+        <Button
+          className="w-full"
+          onClick={() => onPhoto({ src: DEMO_PLATE.src, alt: DEMO_PLATE.alt, isSample: true })}
+        >
           Use sample photo
         </Button>
         <div className="mt-3 grid grid-cols-[1fr_76px_1fr] items-center gap-2">
@@ -306,6 +313,174 @@ function RecipePicker({
   );
 }
 
+const ROUGH_NOTE = "Restaurant food often has hidden oil and sauce. This is a rough guide.";
+
+/** "It's something new": what kind of dish, then a rough estimate (or food search for "Other"). */
+function SomethingNew({
+  onLog,
+  onImport,
+  onPick,
+}: {
+  onLog: (food: { name: string; kcal: number }) => void;
+  onImport: () => void;
+  onPick: () => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<FoodResult | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<FoodResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  async function choose(dishType: string) {
+    if (dishType === OTHER_DISH) {
+      setSearching(true);
+      return;
+    }
+    setBusy(dishType);
+    setError(null);
+    try {
+      setEstimate(await ai.estimateRestaurantPlate({ dishType }));
+    } catch (e) {
+      setError(e instanceof AIError ? e.message : "Ladle couldn’t estimate that. Try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  // Search as the user types (Ladle's built-in food list; quick).
+  useEffect(() => {
+    if (!searching) return;
+    let cancelled = false;
+    const q = query.trim();
+    const t = setTimeout(() => {
+      if (!q) {
+        setResults([]);
+        return;
+      }
+      ai.searchFood(q)
+        .then((r) => {
+          if (!cancelled) setResults(r);
+        })
+        .catch((e) => {
+          if (!cancelled) setError(e instanceof AIError ? e.message : "Search didn’t work. Try again.");
+        });
+    }, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [query, searching]);
+
+  const chip =
+    "text-body min-h-11 rounded-full bg-surface-2 px-4 font-medium hover:brightness-[0.97] disabled:opacity-50";
+
+  if (estimate) {
+    return (
+      <>
+        <p className="text-caption text-ink-2">Rough estimate</p>
+        <h1 className="text-title">{estimate.name}</h1>
+        <p className="text-caption text-ink-2">{estimate.servingLabel}</p>
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <p className="font-display tabular text-[34px] leading-10 font-semibold">
+            {formatNumber(estimate.kcal)} <span className="text-title">kcal</span>
+          </p>
+          <ConfidenceIndicator level="rough" />
+        </div>
+        <p className="text-body mt-2 text-ink-2">{ROUGH_NOTE}</p>
+        <div className="mt-4 flex flex-col gap-2">
+          <Button onClick={() => onLog(estimate)}>Log as a rough estimate</Button>
+          <Button variant="quiet" onClick={() => setEstimate(null)}>
+            Back
+          </Button>
+        </div>
+      </>
+    );
+  }
+
+  if (searching) {
+    return (
+      <>
+        <h1 className="text-title">What did you have?</h1>
+        <label className="mt-3 flex min-h-12 items-center gap-2 rounded-[var(--radius-control)] bg-surface-2 px-3">
+          <SearchIcon className="shrink-0 text-ink-2" width={20} height={20} />
+          <span className="sr-only">Search foods</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="e.g. latte, banana, pad thai"
+            className="text-body min-w-0 flex-1 bg-transparent placeholder:text-ink-2 focus:outline-none"
+          />
+        </label>
+        <ul className="mt-2 divide-y divide-line" aria-live="polite">
+          {results.map((f) => (
+            <li key={f.name}>
+              <button
+                type="button"
+                onClick={() => onLog(f)}
+                className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="text-headline block">{f.name}</span>
+                  <span className="text-caption text-ink-2">{f.servingLabel}</span>
+                </span>
+                <span className="text-body tabular shrink-0">{formatNumber(f.kcal)} kcal</span>
+              </button>
+            </li>
+          ))}
+          {query.trim() && results.length === 0 && (
+            <li className="text-body py-4 text-ink-2">No foods match. Try another word.</li>
+          )}
+        </ul>
+        {error && (
+          <p role="alert" className="text-body mt-2 text-ink-2">
+            {error}
+          </p>
+        )}
+        <Button variant="quiet" className="mt-2 w-full" onClick={() => setSearching(false)}>
+          Back
+        </Button>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h1 className="text-title">What kind of dish is it?</h1>
+      <p className="text-body mt-1 text-ink-2">
+        Ladle gives a rough estimate for a typical portion. For a better number, import the recipe.
+      </p>
+      <div role="group" aria-label="Kind of dish" className="mt-4 flex flex-wrap gap-2">
+        {[...DISH_TYPES.map((d) => d.label), OTHER_DISH].map((label) => (
+          <button
+            key={label}
+            type="button"
+            disabled={busy !== null}
+            onClick={() => void choose(label)}
+            className={chip}
+          >
+            {busy === label ? "…" : label}
+          </button>
+        ))}
+      </div>
+      {error && (
+        <p role="alert" className="text-body mt-3 text-ink-2">
+          {error}
+        </p>
+      )}
+      <div className="mt-5 flex flex-col gap-2">
+        <Button variant="secondary" onClick={onImport}>
+          Import a recipe
+        </Button>
+        <Button variant="quiet" onClick={onPick}>
+          Pick one of my recipes
+        </Button>
+      </div>
+    </>
+  );
+}
+
 function Result({
   plate,
   recipes,
@@ -323,10 +498,16 @@ function Result({
   const [picked, setPicked] = useState(false);
   const [portion, setPortion] = useState(result?.portionServings ?? 1);
   const [mode, setMode] = useState<"main" | "pick" | "new">(
-    suggested ? "main" : result?.isNewFood ? "new" : "pick",
+    suggested ? "main" : result?.isNewFood && result.roughGuess ? "new" : "pick",
   );
   const [fixesOpen, setFixesOpen] = useState(false);
   const loggedId = useRef<string | null>(null);
+  // 0.5–0.7: "Might be X?" with the next two as chips.
+  const unsure = !!result && !result.isNewFood && result.matchConfidence < 0.7;
+  const alternatives = (result?.alternatives ?? [])
+    .map((id) => recipes.find((r) => r.id === id))
+    .filter((r): r is Recipe => !!r && r.id !== recipe?.id)
+    .slice(0, 2);
 
   function finish(message: string, logId: string) {
     clearPlate();
@@ -336,30 +517,35 @@ function Result({
 
   function logIt() {
     if (!recipe) return;
-    const log = actions.logRecipe(recipe.id, portion);
+    const log = actions.logRecipe(recipe.id, portion, { photoColor: plate.photo.color });
     if (log) finish(`Nice, that’s logged · ${formatNumber(log.kcal)} kcal`, log.id);
   }
 
-  function logRough() {
-    if (!result?.roughGuess) return;
-    const log = actions.logFood({ ...result.roughGuess, confidence: "rough" });
+  function logRough(food: { name: string; kcal: number }) {
+    const log = actions.logFood({ name: food.name, kcal: food.kcal, confidence: "rough" });
     finish(`Logged as a rough estimate · ${formatNumber(log.kcal)} kcal`, log.id);
   }
 
-  function importRecipe() {
+  function importDemoRecipe() {
     // Keep the photo saved: after importing, Today offers to finish logging it.
     startDraft({ kind: "link", url: DEMO_LINK });
     router.push("/recipes/new");
+  }
+
+  function choose(r: Recipe) {
+    setRecipe(r);
+    setPicked(true);
+    setPortion(r.usualPortion);
+    setMode("main");
   }
 
   if (mode === "pick") {
     return (
       <Panel>
         <h1 className="text-title">Which recipe is this?</h1>
-        {!result && (
+        {result?.isNewFood && !result.roughGuess && (
           <p className="text-body mt-1 text-ink-2">
-            Ladle analyzes your own photos in Live AI mode. In Demo mode, pick the recipe and your
-            portion.
+            Ladle isn&rsquo;t sure. Your most likely recipes are first.
           </p>
         )}
         <div className="mt-4">
@@ -369,71 +555,72 @@ function Result({
               ...(result?.matchRecipeId ? [result.matchRecipeId] : []),
               ...(result?.alternatives ?? []),
             ]}
-            onPick={(r) => {
-              setRecipe(r);
-              setPicked(true);
-              setPortion(r.usualPortion);
-              setMode("main");
-            }}
+            onPick={choose}
             onBack={recipe ? () => setMode("main") : undefined}
           />
         </div>
-        {result?.roughGuess && (
-          <Button variant="quiet" className="mt-1 w-full" onClick={() => setMode("new")}>
-            It&rsquo;s something new
-          </Button>
-        )}
+        <Button variant="quiet" className="mt-1 w-full" onClick={() => setMode("new")}>
+          It&rsquo;s something new
+        </Button>
       </Panel>
     );
   }
 
   if (mode === "new" || !recipe) {
-    return (
-      <Panel>
-        {result?.suggestImport ? (
-          <>
-            <h1 className="text-title">Looks like garlic chicken stir-fry</h1>
-            <p className="text-body mt-1 text-ink-2">
-              It isn&rsquo;t in your recipes yet. Import it once, and Ladle can measure your share
-              from the recipe.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-title">Something new</h1>
-            <p className="text-body mt-1 text-ink-2">
-              Log a rough estimate from the photo, or import the recipe for a better number.
-            </p>
-          </>
-        )}
-        <div className="mt-5 flex flex-col gap-2">
-          {result?.roughGuess ? (
-            <Button variant={result.suggestImport ? "secondary" : "primary"} onClick={logRough}>
-              Log as a rough estimate · {formatNumber(result.roughGuess.kcal)} kcal
-            </Button>
+    // The scripted sample photo before T1: suggest importing the stir-fry.
+    if (result?.roughGuess) {
+      const roughGuess = result.roughGuess;
+      return (
+        <Panel>
+          {result.suggestImport ? (
+            <>
+              <h1 className="text-title">Looks like garlic chicken stir-fry</h1>
+              <p className="text-body mt-1 text-ink-2">
+                It isn&rsquo;t in your recipes yet. Import it once, and Ladle can measure your
+                share from the recipe.
+              </p>
+            </>
           ) : (
-            <p className="text-caption text-ink-2">
-              Rough estimates of your own photos need Live AI.
-            </p>
+            <>
+              <h1 className="text-title">Something new</h1>
+              <p className="text-body mt-1 text-ink-2">
+                Log a rough estimate from the photo, or import the recipe for a better number.
+              </p>
+            </>
           )}
-          {result?.suggestImport ? (
-            <Button className="order-first" onClick={importRecipe}>
-              Import the recipe
+          <div className="mt-5 flex flex-col gap-2">
+            <Button
+              variant={result.suggestImport ? "secondary" : "primary"}
+              onClick={() => logRough(roughGuess)}
+            >
+              Log as a rough estimate · {formatNumber(roughGuess.kcal)} kcal
             </Button>
-          ) : (
-            <Button variant="secondary" onClick={() => router.push("/recipes")}>
-              Import a recipe
+            {result.suggestImport ? (
+              <Button className="order-first" onClick={importDemoRecipe}>
+                Import the recipe
+              </Button>
+            ) : (
+              <Button variant="secondary" onClick={() => router.push("/recipes")}>
+                Import a recipe
+              </Button>
+            )}
+            <Button variant="quiet" onClick={() => setMode("pick")}>
+              Pick one of my recipes
             </Button>
-          )}
-          <Button variant="quiet" onClick={() => setMode("pick")}>
-            Pick one of my recipes
-          </Button>
-        </div>
-        {result?.roughGuess && (
+          </div>
           <div className="mt-3 flex justify-center">
             <ConfidenceIndicator level="rough" />
           </div>
-        )}
+        </Panel>
+      );
+    }
+    return (
+      <Panel>
+        <SomethingNew
+          onLog={logRough}
+          onImport={() => router.push("/recipes")}
+          onPick={() => setMode("pick")}
+        />
       </Panel>
     );
   }
@@ -444,10 +631,30 @@ function Result({
       <div className="flex items-center gap-3">
         <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
         <div className="min-w-0">
-          <p className="text-caption text-ink-2">{picked ? "You picked" : "Looks like"}</p>
-          <h1 className="text-title">{recipe.name}</h1>
+          <p className="text-caption text-ink-2">
+            {picked ? "You picked" : unsure ? "Might be" : "Looks like"}
+          </p>
+          <h1 className="text-title">
+            {recipe.name}
+            {!picked && unsure ? "?" : ""}
+          </h1>
         </div>
       </div>
+      {!picked && unsure && alternatives.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-caption text-ink-2">Or:</span>
+          {alternatives.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => choose(r)}
+              className="text-caption min-h-10 rounded-full bg-surface-2 px-3 font-semibold hover:brightness-[0.97]"
+            >
+              {r.name}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="mt-1 flex flex-wrap gap-x-4">
         <button
           type="button"
@@ -456,21 +663,19 @@ function Result({
         >
           Not this? Pick another
         </button>
-        {result?.roughGuess && (
-          <button
-            type="button"
-            onClick={() => setMode("new")}
-            className="text-caption min-h-10 font-semibold text-accent-strong"
-          >
-            It&rsquo;s something new
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => setMode("new")}
+          className="text-caption min-h-10 font-semibold text-accent-strong"
+        >
+          It&rsquo;s something new
+        </button>
       </div>
 
       <p className="text-headline mt-3">
         {picked || !result
           ? "How much did you have?"
-          : `Looks like about ${formatPortion(result.portionServings)}`}
+          : `${unsure ? "About" : "Looks like about"} ${formatPortion(result.portionServings)}`}
       </p>
       {!picked && result && <p className="text-caption text-ink-2">{result.portionReason}</p>}
       <div className="mt-2">
@@ -503,7 +708,7 @@ function Result({
         baseKcal={kcal}
         onApply={(option, scope) => {
           // Log the meal, then apply the fix to that log.
-          const log = actions.logRecipe(recipe.id, portion);
+          const log = actions.logRecipe(recipe.id, portion, { photoColor: plate.photo.color });
           if (!log) return null;
           loggedId.current = log.id;
           return actions.applyFix({ option, scope, logId: log.id });
@@ -520,8 +725,25 @@ function Result({
 
 /* ---------- The page ---------- */
 
-function PlateFlow({ recipes, fixes }: { recipes: Recipe[]; fixes: Fix[] }) {
+/** What the plate matcher may know about each recipe. */
+function summary(r: Recipe): RecipeSummary {
+  return {
+    id: r.id,
+    name: r.name,
+    key: r.key,
+    cuisine: r.cuisine,
+    servings: r.servings,
+    usualPortion: r.usualPortion,
+    mealTypes: r.mealTypes,
+    createdAt: r.createdAt,
+    lastOpenedAt: r.lastOpenedAt ?? null,
+    lastEatenAt: r.lastEatenAt,
+  };
+}
+
+function PlateFlow({ data }: { data: AppData }) {
   const router = useRouter();
+  const { recipes, fixes } = data;
   const [plate, setPlate] = useState<PendingPlate | null>(() => {
     const saved = getPlate();
     // A saved photo waiting for the stir-fry import: analyze again now the recipe may exist.
@@ -537,25 +759,53 @@ function PlateFlow({ recipes, fixes }: { recipes: Recipe[]; fixes: Fix[] }) {
     setPlate(next);
   };
 
-  // Analyze (Demo: scripted, after a realistic pause). The photo is already saved.
+  // Analyze. The photo is already saved on this device.
   const analyzing = plate?.status === "analyzing" ? plate : null;
   useEffect(() => {
     if (!analyzing) return;
-    const ctrl = new AbortController();
-    demoDelay(ctrl.signal)
-      .then(() => {
-        const result = demoAnalyzePlate(analyzing.photo.isSample, recipes);
-        const next: PendingPlate = { ...analyzing, status: "ready", result };
-        savePlate(next);
-        setPlate(next);
-      })
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        const next: PendingPlate = { ...analyzing, status: "failed" };
-        savePlate(next);
-        setPlate(next);
+    let cancelled = false;
+    (async () => {
+      const { photo } = analyzing;
+      const color = photo.color ?? (await averageColor(photo.src));
+      const context: PlateContext = {
+        now: analyzing.takenAt,
+        logs: data.logs.map((l) => ({
+          recipeId: l.recipeId,
+          at: l.at,
+          portion: l.portion,
+          photoColor: l.photoColor,
+        })),
+        batches: data.batches.map((b) => ({
+          recipeId: b.recipeId,
+          cookedAt: b.cookedAt,
+          servingsLeft: b.servingsLeft,
+        })),
+        photoColor: color,
+        demoAsset: photo.isSample ? "sample-plate" : undefined,
+      };
+      const result = await ai.analyzePlate({
+        photo: photo.isSample ? new Blob() : await photoBlob(photo.src),
+        recipes: recipes.map(summary),
+        context,
       });
-    return () => ctrl.abort();
+      if (cancelled) return;
+      const next: PendingPlate = {
+        ...analyzing,
+        photo: color ? { ...photo, color } : photo,
+        status: "ready",
+        result,
+      };
+      savePlate(next);
+      setPlate(next);
+    })().catch(() => {
+      if (cancelled) return;
+      const next: PendingPlate = { ...analyzing, status: "failed" };
+      savePlate(next);
+      setPlate(next);
+    });
+    return () => {
+      cancelled = true;
+    };
     // Re-run only when a new analysis starts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyzing?.id, analyzing?.status]);
@@ -591,9 +841,7 @@ function PlateFlow({ recipes, fixes }: { recipes: Recipe[]; fixes: Fix[] }) {
       {plate.status === "failed" && (
         <Panel>
           <h1 className="text-title">Ladle couldn&rsquo;t look at your plate</h1>
-          <p className="text-body mt-1 text-ink-2">
-            Your photo is saved. Check your connection and try again.
-          </p>
+          <p className="text-body mt-1 text-ink-2">Your photo is saved. Try again.</p>
           <div className="mt-5 flex flex-col gap-2">
             <Button onClick={() => update({ ...plate, status: "analyzing" })}>Retry</Button>
             <Button variant="secondary" onClick={() => update(null)}>
@@ -612,5 +860,5 @@ function PlateFlow({ recipes, fixes }: { recipes: Recipe[]; fixes: Fix[] }) {
 export default function CameraPage() {
   const state = useLadle();
   if (!state) return <div className="h-full bg-[#14110e]" />;
-  return <PlateFlow recipes={state.data.recipes} fixes={state.data.fixes} />;
+  return <PlateFlow data={state.data} />;
 }

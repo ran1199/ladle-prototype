@@ -10,7 +10,7 @@ import { PlusIcon } from "@/components/icons";
 import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 import { Button, ButtonLink, Card, ScreenHeader } from "@/components/ui";
-import { demoDelay, demoResultFor } from "@/lib/demo";
+import { ai, AIError, type ExtractInput } from "@/lib/ai";
 import {
   clearDraft,
   getDraft,
@@ -23,7 +23,10 @@ import {
 } from "@/lib/draft";
 import { formatNumber } from "@/lib/format";
 import type { ClarifyingQuestion, ImportSource } from "@/lib/importTypes";
-import { sumMacros } from "@/lib/logic";
+import { formatAmount, sumMacros } from "@/lib/logic";
+import { ingredientFromLine } from "@/lib/mock-ai/extract";
+import { searchIngredients } from "@/lib/mock-ai/match";
+import { photoBlob, shrinkImage } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
 import type { Ingredient, Recipe } from "@/lib/types";
 
@@ -60,6 +63,14 @@ function PotAnimation() {
   );
 }
 
+/** What to send to the AI for each kind of import. */
+async function inputFor(source: ImportSource): Promise<ExtractInput> {
+  if (source.kind === "link") return { kind: "text", text: "", sourceUrl: source.url };
+  if (source.kind === "text") return { kind: "text", text: source.text, sourceUrl: source.link };
+  if (source.isExample) return { kind: "image", file: new Blob(), demoAsset: "recipe-card" };
+  return { kind: "image", file: await photoBlob(source.src) };
+}
+
 function Reading({
   source,
   onDone,
@@ -67,11 +78,13 @@ function Reading({
   onCancel,
 }: {
   source: ImportSource;
-  onDone: (review: ReviewState, draftResult: NonNullable<Draft["result"]>) => void;
-  onFail: () => void;
+  onDone: (result: NonNullable<Draft["result"]>) => void;
+  onFail: (message: string) => void;
   onCancel: () => void;
 }) {
   const [line, setLine] = useState(0);
+  const [progress, setProgress] = useState<number | null>(null);
+  const ownPhoto = source.kind === "photo" && !source.isExample;
 
   useEffect(() => {
     const t = setInterval(() => setLine((l) => (l + 1) % READING_LINES.length), 1100);
@@ -86,14 +99,19 @@ function Reading({
 
   useEffect(() => {
     const ctrl = new AbortController();
-    demoDelay(ctrl.signal)
-      .then(() => {
-        const result = demoResultFor(source);
-        if (result) callbacks.current.onDone(reviewFromResult(result), result);
-        else callbacks.current.onFail();
-      })
-      .catch(() => {
-        // Cancelled: nothing to do.
+    inputFor(source)
+      .then((input) =>
+        ai.extractRecipe(input, {
+          signal: ctrl.signal,
+          onProgress: (f) => setProgress(Math.round(f * 100)),
+        }),
+      )
+      .then((result) => callbacks.current.onDone(result))
+      .catch((e) => {
+        if (ctrl.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) return;
+        callbacks.current.onFail(
+          e instanceof AIError ? e.message : "Ladle couldn’t read that recipe. Try again.",
+        );
       });
     return () => ctrl.abort();
   }, [source]);
@@ -102,9 +120,15 @@ function Reading({
     <div className="flex min-h-full flex-col items-center justify-center px-8 py-12 text-center">
       <PotAnimation />
       <p className="text-title mt-6" aria-live="polite">
-        {READING_LINES[line]}
+        {ownPhoto
+          ? `Reading your recipe photo…${progress !== null ? ` ${progress}%` : ""}`
+          : READING_LINES[line]}
       </p>
-      <p className="text-body mt-2 text-ink-2">This takes a few seconds.</p>
+      <p className="text-body mt-2 text-ink-2">
+        {ownPhoto
+          ? "The first photo takes a little longer while Ladle gets ready."
+          : "This takes a few seconds."}
+      </p>
       <Button variant="secondary" className="mt-8 min-w-40" onClick={onCancel}>
         Cancel
       </Button>
@@ -118,9 +142,13 @@ function middleIndex(q: ClarifyingQuestion) {
   return Math.floor(q.options.length / 2);
 }
 
+const FRACTIONS: Record<string, number> = { "¼": 0.25, "½": 0.5, "¾": 0.75 };
+
+/** "2 tbsp" → 2 tbsp, "¼ cup" → 0.25 cup. */
 function parseAmount(label: string): { quantity: number | null; unit: string } {
-  const m = label.match(/^([\d.]+)\s*(.*)$/);
-  return m ? { quantity: Number(m[1]), unit: m[2] } : { quantity: null, unit: label };
+  const m = label.match(/^(\d*\.?\d*)([¼½¾]?)\s*(.*)$/);
+  if (!m || (!m[1] && !m[2])) return { quantity: null, unit: label };
+  return { quantity: (Number(m[1]) || 0) + (FRACTIONS[m[2]] ?? 0), unit: m[3] };
 }
 
 /** The ingredient with its question's answer applied. */
@@ -154,7 +182,9 @@ function sourceSummary(source: ImportSource): { text: string; history: string } 
       ? { text: "From a pasted caption", history: "Imported from a pasted caption" }
       : { text: "From pasted text", history: "Imported from pasted text" };
   }
-  return { text: "From a photo of a recipe card", history: "Imported from a recipe card photo" };
+  return source.isExample
+    ? { text: "From a photo of a recipe card", history: "Imported from a recipe card photo" }
+    : { text: "From a recipe photo", history: "Imported from a recipe photo" };
 }
 
 function guessIllustration(name: string): Recipe["illustration"] {
@@ -179,40 +209,66 @@ function IngredientEditor({
   onDelete: () => void;
   onClose: () => void;
 }) {
-  const ids = { qty: useId(), unit: useId(), item: useId(), kcal: useId() };
+  const ids = { qty: useId(), unit: useId(), item: useId(), kcal: useId(), food: useId() };
   const [shown, setShown] = useState(ingredient);
   const [qty, setQty] = useState("");
   const [unit, setUnit] = useState("");
   const [item, setItem] = useState("");
   const [kcal, setKcal] = useState("");
+  const [foodQuery, setFoodQuery] = useState("");
+  /** A food picked from Ladle's list: calories follow the amount. */
+  const [picked, setPicked] = useState<{
+    name: string;
+    kcal: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  } | null>(null);
   const [prevUid, setPrevUid] = useState<string | null>(null);
   if (ingredient && ingredient.uid !== prevUid) {
     setPrevUid(ingredient.uid);
     setShown(ingredient);
-    setQty(ingredient.quantity?.toString() ?? "");
+    setQty(ingredient.quantity !== null ? formatAmount(ingredient.quantity) : "");
     setUnit(ingredient.unit);
     setItem(ingredient.item);
     setKcal(String(ingredient.kcal));
+    setFoodQuery("");
+    setPicked(null);
   }
   const current = ingredient ?? shown;
   const isNew = current?.uid.startsWith("new-") && current.item === "";
+  const matches = searchIngredients(foodQuery);
+
+  /** Works out calories for a picked food and amount (Ladle's nutrition table). */
+  function estimate(name: string, amount: string, amountUnit: string) {
+    const r = ingredientFromLine([amount.trim(), amountUnit.trim(), name].filter(Boolean).join(" "));
+    if (r.unreadable) return;
+    setPicked({ name, kcal: r.kcal, protein: r.protein, carbs: r.carbs, fat: r.fat });
+    setKcal(String(r.kcal));
+    if (!amount.trim() && r.quantity !== null) {
+      setQty(formatAmount(r.quantity));
+      setUnit(r.unit);
+    }
+  }
 
   function save() {
     if (!current) return;
     const kcalNum = Math.max(0, Math.round(Number(kcal) || 0));
-    const scale = current.kcal > 0 ? kcalNum / current.kcal : 0;
-    const quantity = qty.trim() === "" ? null : Number(qty);
+    const base = picked ?? current;
+    const scale = base.kcal > 0 ? kcalNum / base.kcal : 0;
+    const quantity = qty.trim() === "" ? null : Number(qty.replace("½", ".5").replace("¼", ".25").replace("¾", ".75"));
     onSave({
       ...current,
-      quantity: Number.isFinite(quantity) ? quantity : null,
+      quantity: quantity !== null && Number.isFinite(quantity) ? quantity : null,
       unit: unit.trim(),
       item: item.trim(),
       text: [qty.trim(), unit.trim(), item.trim()].filter(Boolean).join(" "),
       kcal: linkedToQuestion ? current.kcal : kcalNum,
-      protein: linkedToQuestion ? current.protein : Math.round(current.protein * scale),
-      carbs: linkedToQuestion ? current.carbs : Math.round(current.carbs * scale),
-      fat: linkedToQuestion ? current.fat : Math.round(current.fat * scale),
+      protein: linkedToQuestion ? current.protein : Math.round(base.protein * scale),
+      carbs: linkedToQuestion ? current.carbs : Math.round(base.carbs * scale),
+      fat: linkedToQuestion ? current.fat : Math.round(base.fat * scale),
       unreadable: false,
+      ...(picked ? { estimated: false } : {}),
     });
   }
 
@@ -235,7 +291,8 @@ function IngredientEditor({
         >
           {current.unreadable && (
             <p className="text-body rounded-[var(--radius-control)] border border-estimate p-3">
-              Ladle read this line as &ldquo;{current.text}&rdquo;. Check the amount and calories.
+              Ladle couldn&rsquo;t match &ldquo;{current.text}&rdquo;. Pick a food below, or type
+              the calories.
             </p>
           )}
           <div className="grid grid-cols-[1fr_1fr] gap-2">
@@ -247,7 +304,10 @@ function IngredientEditor({
                 id={ids.qty}
                 inputMode="decimal"
                 value={qty}
-                onChange={(e) => setQty(e.target.value)}
+                onChange={(e) => {
+                  setQty(e.target.value);
+                  if (picked) estimate(picked.name, e.target.value, unit);
+                }}
                 className={field}
                 disabled={linkedToQuestion}
               />
@@ -259,7 +319,10 @@ function IngredientEditor({
               <input
                 id={ids.unit}
                 value={unit}
-                onChange={(e) => setUnit(e.target.value)}
+                onChange={(e) => {
+                  setUnit(e.target.value);
+                  if (picked) estimate(picked.name, qty, e.target.value);
+                }}
                 placeholder="g, tbsp, cup"
                 className={`${field} placeholder:text-ink-2`}
                 disabled={linkedToQuestion}
@@ -278,6 +341,47 @@ function IngredientEditor({
               required
             />
           </div>
+          {!linkedToQuestion && (
+            <div>
+              <label htmlFor={ids.food} className="text-caption font-semibold text-ink-2">
+                Pick a food
+              </label>
+              <input
+                id={ids.food}
+                type="search"
+                value={foodQuery}
+                onChange={(e) => setFoodQuery(e.target.value)}
+                placeholder="Search, e.g. chickpeas"
+                className={`${field} placeholder:text-ink-2`}
+              />
+              {matches.length > 0 && (
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {matches.map((e) => (
+                    <li key={e.name}>
+                      <button
+                        type="button"
+                        aria-pressed={picked?.name === e.name}
+                        onClick={() => {
+                          setItem(e.name);
+                          setFoodQuery("");
+                          estimate(e.name, qty, unit);
+                        }}
+                        className="text-body min-h-11 rounded-full bg-surface-2 px-4 hover:brightness-[0.97]"
+                      >
+                        {e.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {picked && (
+                <p className="text-caption mt-1 text-ink-2" aria-live="polite">
+                  Calories for {[qty, unit].filter(Boolean).join(" ") || "a typical amount"} of{" "}
+                  {picked.name}, from standard nutrition data.
+                </p>
+              )}
+            </div>
+          )}
           <div>
             <label htmlFor={ids.kcal} className="text-caption font-semibold text-ink-2">
               Calories (kcal)
@@ -330,15 +434,23 @@ function QuestionCard({
     `text-body tabular min-h-12 rounded-[var(--radius-control)] px-3 font-medium transition-colors duration-200 ${
       active ? "bg-ink text-bg" : "bg-surface-2 text-ink hover:brightness-[0.97]"
     }`;
+  const servings = question.kind === "servings";
+  const effect = (o: ClarifyingQuestion["options"][number]) =>
+    servings ? "" : ` · +${formatNumber(o.kcalDelta)}`;
 
   return (
     <Card className={answered ? "" : "border-2 border-estimate"}>
       <p className="text-headline">{question.prompt}</p>
+      {servings && !answered && (
+        <p className="text-caption mt-1 text-ink-2">
+          The recipe doesn&rsquo;t say, so Ladle guessed from the amounts.
+        </p>
+      )}
       {answered && chosen ? (
         <div className="mt-2 flex items-center justify-between gap-3">
           <p className="text-body tabular text-ink-2">
-            ✓ {answer === "unsure" ? `Not sure, so Ladle used ${chosen.label}` : chosen.label} · +
-            {formatNumber(chosen.kcalDelta)} kcal
+            ✓ {answer === "unsure" ? `Not sure, so Ladle used ${chosen.label}` : chosen.label}
+            {servings ? "" : ` · +${formatNumber(chosen.kcalDelta)} kcal`}
           </p>
           <button
             type="button"
@@ -352,7 +464,8 @@ function QuestionCard({
         <div role="group" aria-label={question.prompt} className="mt-3 flex flex-wrap gap-2">
           {question.options.map((o, i) => (
             <button key={o.label} type="button" className={chip(false)} onClick={() => onAnswer(i)}>
-              {o.label} · +{formatNumber(o.kcalDelta)}
+              {o.label}
+              {effect(o)}
             </button>
           ))}
           <button type="button" className={chip(false)} onClick={() => onAnswer("unsure")}>
@@ -379,7 +492,9 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
     setDraft({ ...draft, review });
   }, [draft, review]);
 
-  const questions = result.questions.filter((q) => review.ingredients.some((i) => i.qid === q.id));
+  const questions = result.questions.filter(
+    (q) => q.kind === "servings" || review.ingredients.some((i) => i.qid === q.id),
+  );
   const questionFor = (i: ReviewIngredient) => questions.find((q) => q.id === i.qid);
   const finalIngredients = review.ingredients.map((i) =>
     applyAnswer(i, questionFor(i), i.qid ? review.answers[i.qid] : undefined),
@@ -393,14 +508,14 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
 
   const update = (patch: Partial<ReviewState>) => setReview((r) => ({ ...r, ...patch }));
 
-  function save() {
+  async function save() {
     const ingredients: Ingredient[] = finalIngredients.map((i) => {
       const rest = { ...i } as Partial<ReviewIngredient>;
       delete rest.uid;
       delete rest.qid;
       const ing = rest as Ingredient;
       if (i.vague && i.quantity !== null) {
-        ing.text = `${i.text} (${i.quantity} ${i.unit})`;
+        ing.text = `${i.text} (${formatAmount(i.quantity)} ${i.unit})`;
       }
       return ing;
     });
@@ -409,14 +524,21 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
         ? draft.source.url
         : draft.source.kind === "text"
           ? (draft.source.link ?? "Pasted text")
-          : "Recipe card photo";
+          : draft.source.isExample
+            ? "Recipe card photo"
+            : "Recipe photo";
+    // Keep a small copy of the user's own photo with the recipe (it's stored on this device).
+    let photo: Recipe["photo"] = null;
+    if (draft.source.kind === "photo") {
+      const { src, alt, isExample } = draft.source;
+      photo = { src: isExample ? src : await shrinkImage(src, 800).catch(() => src), alt };
+    }
     const id = actions.saveRecipe({
       name: review.name.trim(),
       servings: review.servings,
       ingredients,
       source,
-      photo:
-        draft.source.kind === "photo" ? { src: draft.source.src, alt: draft.source.alt } : null,
+      photo,
       illustration: guessIllustration(review.name),
       cuisine: null,
       historyNote: summary.history,
@@ -455,10 +577,17 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
               alt={draft.source.alt}
               width={1200}
               height={860}
+              unoptimized={!draft.source.isExample}
               className="h-auto w-full"
               priority
             />
           </button>
+        )}
+
+        {result.notice && (
+          <p role="status" className="text-body rounded-[var(--radius-card)] border-2 border-estimate p-4">
+            {result.notice}
+          </p>
         )}
 
         <Card className="space-y-4">
@@ -479,7 +608,9 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
               <p className="text-caption text-ink-2">
                 {result.servingsConfidence === "stated"
                   ? "As written in the recipe"
-                  : "Ladle’s guess"}
+                  : review.answers.servings !== undefined
+                    ? "Your answer"
+                    : "Ladle’s guess"}
               </p>
             </div>
             <div className="flex items-center gap-1 rounded-[var(--radius-control)] bg-surface-2 p-1">
@@ -519,7 +650,12 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
                   const answers = { ...review.answers };
                   if (a === undefined) delete answers[q.id];
                   else answers[q.id] = a;
-                  update({ answers });
+                  // A servings answer sets the servings (the stepper can still change them).
+                  const picked =
+                    q.kind === "servings" && a !== undefined
+                      ? q.options[a === "unsure" ? middleIndex(q) : a].servings
+                      : undefined;
+                  update(picked ? { answers, servings: picked } : { answers });
                 }}
               />
             ))}
@@ -552,10 +688,10 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
                       <span className="min-w-0 flex-1">
                         <span className="text-body block">
                           {i.text}
-                          {i.vague && !waiting && i.quantity !== null && (
+                          {i.vague && !waiting && i.quantity !== null && i.qid && (
                             <span className="text-ink-2">
                               {" "}
-                              · {i.quantity} {i.unit}
+                              · {formatAmount(i.quantity)} {i.unit}
                             </span>
                           )}
                         </span>
@@ -569,7 +705,9 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
                         )}
                         {i.estimated && (
                           <span className="text-caption text-estimate-ink">
-                            Estimate (not sure)
+                            {i.qid
+                              ? "Estimate (not sure)"
+                              : `Estimate: Ladle used ${i.quantity !== null ? `${formatAmount(i.quantity)} ${i.unit}`.trim() : "a typical amount"}`}
                           </span>
                         )}
                       </span>
@@ -635,7 +773,7 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
           </p>
           <p className="text-body tabular text-ink-2">{formatNumber(perServing)} per serving</p>
         </div>
-        <Button className="mt-2 w-full" disabled={!canSave} onClick={save}>
+        <Button className="mt-2 w-full" disabled={!canSave} onClick={() => void save()}>
           Save recipe
         </Button>
         {!canSave && (
@@ -670,12 +808,17 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
       />
 
       {draft.source.kind === "photo" && (
-        <Sheet open={photoOpen} onClose={() => setPhotoOpen(false)} title="Recipe card">
+        <Sheet
+          open={photoOpen}
+          onClose={() => setPhotoOpen(false)}
+          title={draft.source.isExample ? "Recipe card" : "Recipe photo"}
+        >
           <Image
             src={draft.source.src}
             alt={draft.source.alt}
             width={1200}
             height={860}
+            unoptimized={!draft.source.isExample}
             className="h-auto w-full rounded-[var(--radius-control)]"
           />
           <Button variant="secondary" className="mt-4 w-full" onClick={() => setPhotoOpen(false)}>
@@ -699,14 +842,105 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
 
 /* ---------- The page ---------- */
 
+/** A photo Ladle couldn't read well: show it beside the text it read, to fix by hand. */
+function FixPhotoText({
+  draft,
+  onRead,
+  onCancel,
+}: {
+  draft: Draft;
+  onRead: (result: NonNullable<Draft["result"]>) => void;
+  onCancel: () => void;
+}) {
+  const [text, setText] = useState(draft.result?.readText ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const textId = useId();
+  const photo = draft.source.kind === "photo" ? draft.source : null;
+
+  async function read() {
+    setBusy(true);
+    setError(null);
+    try {
+      onRead(await ai.extractRecipe({ kind: "text", text }));
+    } catch (e) {
+      setError(e instanceof AIError ? e.message : "Ladle couldn’t read that. Try again.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <ScreenHeader
+        title="Check the text"
+        subtitle="I couldn’t read all of this. Type or fix the lines you see, and I’ll do the rest."
+        leading={
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-headline inline-flex min-h-11 items-center rounded-lg px-2 text-accent-strong"
+          >
+            Cancel
+          </button>
+        }
+      />
+      <form
+        noValidate
+        className="space-y-4 px-5 pb-6"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (text.trim()) void read();
+        }}
+      >
+        {photo && (
+          // eslint-disable-next-line @next/next/no-img-element -- a local photo (data URL)
+          <img src={photo.src} alt={photo.alt} className="h-auto w-full rounded-[var(--radius-card)]" />
+        )}
+        <div>
+          <label htmlFor={textId} className="text-headline">
+            Recipe text
+          </label>
+          <textarea
+            id={textId}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={9}
+            placeholder={"One ingredient per line, e.g.\n2 tbsp soy sauce"}
+            className="text-body mt-2 w-full rounded-[var(--radius-control)] bg-surface-2 p-4 placeholder:text-ink-2"
+          />
+        </div>
+        {error && (
+          <p role="alert" className="text-body rounded-[var(--radius-control)] bg-surface-2 p-4">
+            {error}
+          </p>
+        )}
+        <Button type="submit" className="w-full" disabled={!text.trim() || busy}>
+          {busy ? "Reading…" : "Read these lines"}
+        </Button>
+      </form>
+    </>
+  );
+}
+
 function ImportFlow() {
   const router = useRouter();
   const [draft, setDraftState] = useState<Draft | null>(() => getDraft());
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
   const leave = () => {
     clearDraft();
     router.replace("/recipes");
+  };
+
+  const store = (result: NonNullable<Draft["result"]>) => {
+    if (!draft) return;
+    const next: Draft = {
+      ...draft,
+      result,
+      review: result.lowConfidence ? null : reviewFromResult(result),
+    };
+    setDraft(next);
+    setDraftState(next);
   };
 
   if (!draft) {
@@ -731,11 +965,11 @@ function ImportFlow() {
         <ScreenHeader title="Add a recipe" />
         <div className="px-5">
           <Card>
-            <p className="text-body">
-              Ladle couldn&rsquo;t read that recipe. Check your connection and try again.
+            <p role="alert" className="text-body">
+              {failed}
             </p>
             <div className="mt-4 flex flex-col gap-2">
-              <Button onClick={() => setFailed(false)}>Try again</Button>
+              <Button onClick={() => setFailed(null)}>Try again</Button>
               <Button variant="secondary" onClick={leave}>
                 Back to Recipes
               </Button>
@@ -747,18 +981,11 @@ function ImportFlow() {
   }
 
   if (!draft.result) {
-    return (
-      <Reading
-        source={draft.source}
-        onDone={(review, result) => {
-          const next = { ...draft, result, review };
-          setDraft(next);
-          setDraftState(next);
-        }}
-        onFail={() => setFailed(true)}
-        onCancel={leave}
-      />
-    );
+    return <Reading source={draft.source} onDone={store} onFail={setFailed} onCancel={leave} />;
+  }
+
+  if (draft.result.lowConfidence) {
+    return <FixPhotoText draft={draft} onRead={store} onCancel={leave} />;
   }
 
   return <Review draft={draft} onDiscard={leave} />;

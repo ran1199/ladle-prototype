@@ -6,7 +6,8 @@
 // Ladle asks: "You usually add more oil to this. Update your recipe?"
 
 import { useId, useState } from "react";
-import { FIX_KINDS, fixOptions, type FixOption, type Suggestion } from "@/lib/fixes";
+import { ai } from "@/lib/ai";
+import { customOption, FIX_KINDS, fixOptions, type FixOption, type Suggestion } from "@/lib/fixes";
 import { formatNumber } from "@/lib/format";
 import type { FixKind, Recipe } from "@/lib/types";
 import { Sheet } from "./Sheet";
@@ -51,8 +52,15 @@ export function QuickFixSheet({
   const [step, setStep] = useState<Step>(start);
   const [selected, setSelected] = useState<string | null>(null);
   const [freeText, setFreeText] = useState("");
-  const [freeTextNote, setFreeTextNote] = useState(false);
+  const [estimating, setEstimating] = useState(false);
+  /** The typed change, worked out by the AI (or calories the user typed). */
+  const [custom, setCustom] = useState<FixOption | null>(null);
+  /** The AI couldn't work the text out: ask for calories instead. */
+  const [unknown, setUnknown] = useState(false);
+  const [manualKcal, setManualKcal] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const freeTextId = useId();
+  const manualId = useId();
 
   // Start fresh each time the sheet opens.
   const [wasOpen, setWasOpen] = useState(open);
@@ -62,15 +70,55 @@ export function QuickFixSheet({
       setStep(start);
       setSelected(null);
       setFreeText("");
-      setFreeTextNote(false);
+      setCustom(null);
+      setUnknown(false);
+      setManualKcal("");
+      setError(null);
     }
   }
 
   const kinds = recipe ? FIX_KINDS : FIX_KINDS.filter((k) => k.kind === "other");
-  const options = step.name === "options" ? fixOptions(step.kind, recipe, portion, baseKcal) : [];
+  const options =
+    step.name === "options"
+      ? [
+          ...(step.kind === "other" && custom ? [custom] : []),
+          ...fixOptions(step.kind, recipe, portion, baseKcal),
+        ]
+      : [];
   const option = options.find((o) => o.detail === selected) ?? options[0] ?? null;
   const kindLabel =
     step.name === "options" ? FIX_KINDS.find((k) => k.kind === step.kind)?.label : undefined;
+
+  async function estimate() {
+    const text = freeText.trim();
+    if (!text) return;
+    setEstimating(true);
+    setError(null);
+    setUnknown(false);
+    try {
+      const r = await ai.estimateCorrection({ recipe, text, portion });
+      if (r.recognized === false) {
+        setUnknown(true);
+      } else {
+        const option = customOption(recipe, portion, r.kcalDelta / portion, r.summary);
+        setCustom(option);
+        setSelected(option.detail);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Ladle couldn’t work that out. Try again.");
+    } finally {
+      setEstimating(false);
+    }
+  }
+
+  function applyManual() {
+    const kcal = Number(manualKcal);
+    if (!manualKcal.trim() || !Number.isFinite(kcal)) return;
+    const option = customOption(recipe, portion, kcal / portion, freeText.trim() || "Something else");
+    setCustom(option);
+    setSelected(option.detail);
+    setUnknown(false);
+  }
 
   function apply(scope: "once" | "always") {
     if (!option) return;
@@ -125,44 +173,84 @@ export function QuickFixSheet({
           )}
 
           {step.kind === "other" && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (freeText.trim()) setFreeTextNote(true);
-              }}
-              className="mb-3"
-            >
-              <label htmlFor={freeTextId} className="text-caption font-semibold text-ink-2">
-                What was different?
-              </label>
-              <div className="mt-1 flex gap-2">
-                <input
-                  id={freeTextId}
-                  value={freeText}
-                  onChange={(e) => {
-                    setFreeText(e.target.value);
-                    setFreeTextNote(false);
-                  }}
-                  placeholder="e.g. added cheese on top"
-                  className="text-body min-h-12 min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-2 px-4 placeholder:text-ink-2"
-                />
-                <Button type="submit" variant="secondary" className="shrink-0 px-4">
-                  Estimate
-                </Button>
-              </div>
-              {freeTextNote && (
+            <div className="mb-3">
+              <form
+                noValidate
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void estimate();
+                }}
+              >
+                <label htmlFor={freeTextId} className="text-caption font-semibold text-ink-2">
+                  What was different?
+                </label>
+                <div className="mt-1 flex gap-2">
+                  <input
+                    id={freeTextId}
+                    value={freeText}
+                    onChange={(e) => {
+                      setFreeText(e.target.value);
+                      setUnknown(false);
+                      setError(null);
+                    }}
+                    placeholder="e.g. added 30g cheddar"
+                    className="text-body min-h-12 min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-2 px-4 placeholder:text-ink-2"
+                  />
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    className="shrink-0 px-4"
+                    disabled={!freeText.trim() || estimating}
+                  >
+                    {estimating ? "…" : "Estimate"}
+                  </Button>
+                </div>
+              </form>
+              {error && (
                 <p role="alert" className="text-caption mt-2 text-ink-2">
-                  Live AI estimates your own description. In Demo mode, pick an example below.
+                  {error}
                 </p>
               )}
-              <p className="text-caption mt-3 font-semibold text-ink-2">Examples</p>
-            </form>
+              {unknown && (
+                <form
+                  noValidate
+                  className="mt-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    applyManual();
+                  }}
+                >
+                  <p role="alert" className="text-body">
+                    I couldn&rsquo;t work that out. Enter the calories yourself?
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <label htmlFor={manualId} className="sr-only">
+                      Calories for this plate (use a minus sign for less)
+                    </label>
+                    <input
+                      id={manualId}
+                      inputMode="numeric"
+                      value={manualKcal}
+                      onChange={(e) => setManualKcal(e.target.value.replace(/[^\d-]/g, ""))}
+                      placeholder="kcal, e.g. 120 or -50"
+                      className="text-body tabular min-h-12 min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-2 px-4 placeholder:text-ink-2"
+                    />
+                    <Button type="submit" variant="secondary" className="shrink-0 px-4">
+                      Use
+                    </Button>
+                  </div>
+                </form>
+              )}
+              <p className="text-caption mt-3 font-semibold text-ink-2">
+                {custom ? "Your change, or an example" : "Examples"}
+              </p>
+            </div>
           )}
 
           {options.length === 0 ? (
             <p className="text-body text-ink-2">
               {step.kind === "swapped"
-                ? "Ladle needs Live AI to work out swaps for this recipe. Try “Something else” instead."
+                ? "Ladle doesn’t know a swap for this recipe. Try “Something else” and describe it."
                 : "There’s no oil in this recipe to use less of."}
             </p>
           ) : (
