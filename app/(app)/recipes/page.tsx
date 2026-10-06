@@ -143,7 +143,20 @@ export default function RecipesPage() {
           </Button>
         </div>
 
-        {state && shown.length === 0 && (
+        {state && state.data.recipes.length === 0 && (
+          <Card>
+            <p className="text-headline">No recipes yet</p>
+            <p className="text-body mt-1 text-ink-2">
+              Add one from a link, a caption or a photo of a recipe card. Ladle reads the
+              ingredients so you only enter them once.
+            </p>
+            <Button className="mt-4 w-full" onClick={() => setAddOpen(true)}>
+              Add your first recipe
+            </Button>
+          </Card>
+        )}
+
+        {state && state.data.recipes.length > 0 && shown.length === 0 && (
           <p className="text-body py-6 text-center text-ink-2">
             No recipes match &ldquo;{query.trim()}&rdquo;.
           </p>

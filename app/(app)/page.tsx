@@ -184,7 +184,10 @@ export default function TodayPage() {
 
   return (
     <>
-      <ScreenHeader title={`Welcome back, ${profile.name}.`} subtitle={formatLongDate(now)} />
+      <ScreenHeader
+        title={profile.name ? `Welcome back, ${profile.name}.` : "Welcome back."}
+        subtitle={formatLongDate(now)}
+      />
       <div className="space-y-4 px-5 pb-8">
         {returning && (
           <Card>

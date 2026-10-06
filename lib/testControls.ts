@@ -13,7 +13,20 @@ export type TestFlags = {
   failNext?: boolean;
   /** Hide the "Prototype" pill (for clean screenshots or recordings). */
   hidePill?: boolean;
+  /** Show the floating task timer (a stopwatch for the moderator). */
+  showTimer?: boolean;
+  /** Show which test task (T1–T5) is next. */
+  showNextTask?: boolean;
+  /** Show the floating test tools at the top of the screen instead of the bottom. */
+  overlayTop?: boolean;
+  /** Stopwatch: when it was started (ms since 1970), or null when paused. */
+  timerStartedAt?: number | null;
+  /** Stopwatch: time counted before the current run. */
+  timerElapsedMs?: number;
 };
+
+/** On/off switches (the other fields are the stopwatch's numbers). */
+export type TestSwitch = "failNext" | "hidePill" | "showTimer" | "showNextTask";
 
 const listeners = new Set<() => void>();
 let snapshot: TestFlags | null = null;

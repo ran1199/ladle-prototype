@@ -21,7 +21,9 @@ import {
 import type { FixOption, Suggestion } from "./fixes";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
-import type { AppData, Batch, Confidence, LogEntry, PhotoColor, Prefs } from "./types";
+import { clearDraft } from "./draft";
+import { clearPlate } from "./plate";
+import type { AppData, Batch, Confidence, LogEntry, PhotoColor, Prefs, Profile } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
 const PREFS_KEY = "ladle:prefs:v1";
@@ -29,6 +31,28 @@ const PREFS_KEY = "ladle:prefs:v1";
 const DEFAULT_PREFS: Prefs = { mode: "demo" };
 
 export type LadleState = { data: AppData; prefs: Prefs };
+
+/** What "Delete all data" leaves: Ladle with nothing in it. */
+export function emptyData(): AppData {
+  return {
+    version: 1,
+    profile: { name: "", sex: "female", dailyTarget: 1600, startingWeightKg: null },
+    recipes: [],
+    logs: [],
+    batches: [],
+    fixes: [],
+  };
+}
+
+/** Everything Ladle keeps in this browser, for "Export my data". */
+export function exportData(): string {
+  const { data } = getSnapshot();
+  return JSON.stringify(
+    { app: "Ladle prototype", exportedAt: new Date().toISOString(), data },
+    null,
+    2,
+  );
+}
 
 let state: LadleState | null = null;
 const listeners = new Set<() => void>();
@@ -91,9 +115,24 @@ function setData(update: (data: AppData) => AppData) {
 }
 
 export const actions = {
-  /** Restore Maya's starting data. */
+  /**
+   * Restore Maya's starting data exactly ("Reset demo" / "Reset to test start"),
+   * and drop any import or plate photo in progress.
+   */
   resetDemo() {
+    clearDraft();
+    clearPlate();
     setData(() => buildSeed());
+  },
+  /** "Delete all data": an empty Ladle (no recipes, logs or batches) in this browser. */
+  deleteAllData() {
+    clearDraft();
+    clearPlate();
+    setData(() => emptyData());
+  },
+  /** Change profile fields (name, sex, daily target, starting weight). */
+  updateProfile(changes: Partial<Profile>) {
+    setData((data) => ({ ...data, profile: { ...data.profile, ...changes } }));
   },
   /** Log a portion of a saved recipe to today (optionally from a batch). */
   logRecipe(

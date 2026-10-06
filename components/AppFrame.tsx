@@ -10,6 +10,7 @@ import { SheetHostProvider } from "./Sheet";
 import { SidePanel } from "./SidePanel";
 import { SiteConfigProvider } from "./SiteConfig";
 import { TabBar } from "./TabBar";
+import { TestOverlay } from "./TestOverlay";
 import { ToastProvider } from "./Toast";
 
 /** Fake iPhone status bar, only drawn inside the desktop frame. */
@@ -69,6 +70,7 @@ export function AppFrame({
                 </div>
               </SheetHostProvider>
             </ToastProvider>
+            <TestOverlay aboveTabBar={showTabBar} />
             {/* Sheets appear here, on top of the app. */}
             <div ref={setSheetHost} />
             <div

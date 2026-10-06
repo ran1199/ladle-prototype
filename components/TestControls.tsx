@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { actions } from "@/lib/store";
-import { setTestFlags, useTestFlags, type TestFlags } from "@/lib/testControls";
+import { setTestFlags, useTestFlags, type TestSwitch } from "@/lib/testControls";
 import { Sheet } from "./Sheet";
 import { Button } from "./ui";
 
@@ -16,7 +16,7 @@ function Toggle({
 }: {
   label: string;
   hint: string;
-  flag: keyof TestFlags;
+  flag: TestSwitch;
 }) {
   const flags = useTestFlags();
   const on = !!flags[flag];
@@ -52,7 +52,18 @@ export function TestControls({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Sheet open={open} onClose={onClose} title="Test controls">
       <p className="text-caption text-ink-2">For usability sessions. Saved in this browser only.</p>
-      <div className="mt-2 divide-y divide-line">
+      <ResetToTestStart onDone={onClose} />
+      <div className="divide-y divide-line border-t border-line">
+        <Toggle
+          flag="showTimer"
+          label="Show task timer"
+          hint="A small stopwatch you can start, pause and reset."
+        />
+        <Toggle
+          flag="showNextTask"
+          label="Show the next test task"
+          hint="Shows which of T1–T5 the participant hasn’t done yet."
+        />
         <Toggle
           flag="failNext"
           label="Simulate an AI error on the next request"
@@ -91,6 +102,41 @@ function AgeBatches() {
           ? "Done. Today and Pantry now ask “Still have it?”."
           : "To try the “Still have it?” question without waiting."}
       </p>
+    </div>
+  );
+}
+
+function ResetToTestStart({ onDone }: { onDone: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <div className="py-3">
+      {confirming ? (
+        <div className="rounded-[var(--radius-control)] border-2 border-estimate p-3">
+          <p className="text-body">
+            Restore Maya&rsquo;s starting data and reset the timer? Everything done in this browser
+            is cleared.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Button
+              onClick={() => {
+                actions.resetDemo();
+                setTestFlags({ failNext: false, timerStartedAt: null, timerElapsedMs: 0 });
+                setConfirming(false);
+                onDone();
+              }}
+            >
+              Reset now
+            </Button>
+            <Button variant="secondary" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Button className="w-full" onClick={() => setConfirming(true)}>
+          Reset to test start
+        </Button>
+      )}
     </div>
   );
 }
