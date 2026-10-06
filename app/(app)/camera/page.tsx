@@ -17,7 +17,8 @@ import { PortionPicker } from "@/components/PortionPicker";
 import { QuickFixSheet } from "@/components/QuickFixSheet";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui";
-import { ai, type FoodResult, type PlateContext, type RecipeSummary } from "@/lib/ai";
+import { loadAI } from "@/lib/ai/lazy";
+import type { FoodResult, PlateContext, RecipeSummary } from "@/lib/ai/types";
 import { DEMO_PLATE } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
 import { startDraft } from "@/lib/draft";
@@ -693,6 +694,7 @@ function PlateFlow({ data }: { data: AppData }) {
         photoColor: color,
         demoAsset: photo.isSample ? "sample-plate" : undefined,
       };
+      const ai = await loadAI();
       const result = await ai.analyzePlate({
         photo: photo.isSample ? new Blob() : await photoBlob(photo.src),
         recipes: recipes.map(summary),

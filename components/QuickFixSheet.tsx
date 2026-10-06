@@ -6,7 +6,7 @@
 // Ladle asks: "You usually add more oil to this. Update your recipe?"
 
 import { useId, useState } from "react";
-import { ai } from "@/lib/ai";
+import { loadAI } from "@/lib/ai/lazy";
 import { customOption, FIX_KINDS, fixOptions, type FixOption, type Suggestion } from "@/lib/fixes";
 import { formatNumber } from "@/lib/format";
 import type { FixKind, Recipe } from "@/lib/types";
@@ -96,6 +96,7 @@ export function QuickFixSheet({
     setError(null);
     setUnknown(false);
     try {
+      const ai = await loadAI();
       const r = await ai.estimateCorrection({ recipe, text, portion });
       if (r.recognized === false) {
         setUnknown(true);

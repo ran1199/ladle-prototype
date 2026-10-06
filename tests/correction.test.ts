@@ -73,3 +73,10 @@ describe("free-text corrections", () => {
     expect(r.summary).toBe("I couldn’t work that out. Enter the calories yourself?");
   });
 });
+
+test("“a banana” counts one banana", () => {
+  const r = estimateCorrectionMock({ recipe: null, text: "added a banana" });
+  expect(r.summary).toBe("Added a banana");
+  expect(r.kcalDelta).toBeGreaterThan(80);
+  expect(r.kcalDelta).toBeLessThan(130);
+});

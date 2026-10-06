@@ -89,7 +89,7 @@ function readPart(
   recipe: Recipe | null,
   portion: number,
 ): Part | null {
-  const words = text.replace(/^(?:the|a|an|some|my|of)\s+/i, "").replace(/\s+(?:on top|on it|today|this time|in it)$/i, "").trim();
+  const words = text.replace(/^(?:the|some|my|of)\s+/i, "").replace(/\s+(?:on top|on it|today|this time|in it)$/i, "").trim();
   if (!words) return null;
 
   let amount = parseAmount(words);

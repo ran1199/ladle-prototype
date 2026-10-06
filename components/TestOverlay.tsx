@@ -85,7 +85,7 @@ export function TestOverlay({ aboveTabBar }: { aboveTabBar: boolean }) {
     <div
       role="region"
       aria-label="Test tools"
-      className="pointer-events-auto absolute left-2 z-40 flex max-w-[calc(100%-16px)] items-center gap-2 rounded-full bg-ink/90 py-1 pr-1 pl-3 text-bg shadow-float"
+      className="pointer-events-auto absolute left-2 z-40 flex max-w-[calc(100%-16px)] items-center gap-2 rounded-full bg-ink py-1 pr-1 pl-3 text-bg shadow-float"
       style={position}
     >
       {flags.showNextTask && state && (

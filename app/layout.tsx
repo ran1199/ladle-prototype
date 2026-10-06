@@ -10,12 +10,25 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 // layout identical everywhere. Runs before the first paint and on every resize.
 const FRAME_ZOOM_SCRIPT = `(function(){var d=document.documentElement;function f(){var z=Math.min(1,(window.innerHeight-48)/868);d.style.setProperty("--frame-zoom",String(Math.max(0.6,z)))}f();window.addEventListener("resize",f)})();`;
 
+const TITLE = "Ladle: calorie tracking for home cooks";
+const DESCRIPTION =
+  "A UX case study prototype: import a recipe once, snap your plate, and Ladle estimates your share.";
+
+// The preview image for shared links is app/opengraph-image.png (and twitter-image.png).
 export const metadata: Metadata = {
-  title: "Ladle: calorie tracking for home cooks",
-  description:
-    "A UX case study prototype: import a recipe once, snap your plate, and Ladle estimates your share.",
+  metadataBase: new URL("https://ladle-prototype.vercel.app"),
+  title: TITLE,
+  description: DESCRIPTION,
   applicationName: "Ladle",
   appleWebApp: { capable: true, title: "Ladle", statusBarStyle: "default" },
+  openGraph: {
+    type: "website",
+    siteName: "Ladle",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {

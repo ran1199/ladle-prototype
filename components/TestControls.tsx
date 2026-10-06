@@ -3,6 +3,7 @@
 // Hidden test controls for usability sessions (press and hold the version line
 // on the Me tab). Saved in this browser only.
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { actions } from "@/lib/store";
 import { setTestFlags, useTestFlags, type TestSwitch } from "@/lib/testControls";
@@ -107,6 +108,7 @@ function AgeBatches() {
 }
 
 function ResetToTestStart({ onDone }: { onDone: () => void }) {
+  const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   return (
     <div className="py-3">
@@ -123,6 +125,7 @@ function ResetToTestStart({ onDone }: { onDone: () => void }) {
                 setTestFlags({ failNext: false, timerStartedAt: null, timerElapsedMs: 0 });
                 setConfirming(false);
                 onDone();
+                router.push("/");
               }}
             >
               Reset now

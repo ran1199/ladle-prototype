@@ -7,7 +7,8 @@
 // - FoodLogPanel: pick how many servings, see the calories, log it.
 
 import { useEffect, useId, useState } from "react";
-import { ai, AIError, type FoodResult } from "@/lib/ai";
+import { loadAI } from "@/lib/ai/lazy";
+import { AIError, type FoodResult } from "@/lib/ai/types";
 import { formatNumber } from "@/lib/format";
 import { DISH_TYPES, OTHER_DISH } from "@/lib/mock-ai/restaurant";
 import type { Confidence } from "@/lib/types";
@@ -43,7 +44,8 @@ export function FoodSearchPanel({
         setSearched("");
         return;
       }
-      ai.searchFood(q)
+      loadAI()
+        .then((ai) => ai.searchFood(q))
         .then((r) => {
           if (cancelled) return;
           setResults(r);
@@ -119,6 +121,7 @@ export function DishTypePanel({
     setBusy(dishType);
     setError(null);
     try {
+      const ai = await loadAI();
       onEstimate(await ai.estimateRestaurantPlate({ dishType }));
     } catch (e) {
       setError(e instanceof AIError ? e.message : "Ladle couldn’t estimate that. Try again.");
