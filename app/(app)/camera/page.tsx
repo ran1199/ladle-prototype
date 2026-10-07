@@ -2,7 +2,8 @@
 
 // Plate camera and photo log (F5, F8; task T2).
 // Capture → (photo + draft saved locally) → "Looking at your plate…" → result:
-// "Looks like Air-fryer garlic chicken with mushrooms", portion chips, calories, confidence, Log it.
+// "Looks like Air-fryer garlic chicken with mushrooms", the portion helper (pan +
+// slider) with portion chips, calories, confidence, Log it.
 // Ingredients always come from the recipe; the photo only measures the share.
 
 import Image from "next/image";
@@ -402,7 +403,8 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
   const router = useRouter();
   const toast = useToast();
   const result = plate.result;
-  // The user's own photo: the portion helper (pan + slider) sets the share.
+  // Every result with a recipe shows the portion helper (pan + slider). It starts
+  // at Ladle's estimate for the sample photo, and at your usual portion otherwise.
   const ownPhoto = !plate.photo.isSample;
   const suggested = recipes.find((r) => r.id === result?.matchRecipeId) ?? null;
   const [recipe, setRecipe] = useState<Recipe | null>(suggested);
@@ -623,29 +625,31 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
         </button>
       </div>
 
-      {ownPhoto ? (
-        <div className="mt-4">
-          <PortionHelper
-            photo={plate.photo}
-            value={portion}
-            onChange={setPortion}
-            servings={batch ? batch.servingsMade : recipe.servings}
-            servingsLeft={batch ? batch.servingsLeft : undefined}
-            usualPortion={recipe.usualPortion}
-            kcalFor={(p) => logKcal(recipe, p, batch)}
-            level={level}
-          />
-        </div>
-      ) : (
-        <>
-          <p className="text-headline mt-3">
-            {picked || !result
-              ? "How much did you have?"
-              : `${unsure ? "About" : "Looks like about"} ${formatPortion(result.portionServings)}`}
-          </p>
-          {!picked && result && <p className="text-caption text-ink-2">{result.portionReason}</p>}
-        </>
-      )}
+      <div className="mt-4">
+        <PortionHelper
+          photo={plate.photo}
+          value={portion}
+          onChange={setPortion}
+          servings={batch ? batch.servingsMade : recipe.servings}
+          servingsLeft={batch ? batch.servingsLeft : undefined}
+          start={
+            !ownPhoto && !picked && result
+              ? {
+                  portion: result.portionServings,
+                  // "One chicken leg with vegetables, about a quarter…" → the first part (the pan shows the share).
+                  label: `Ladle’s estimate: ${result.portionReason.split(",")[0].replace(/^./, (c) => c.toLowerCase())}`,
+                  differs: `Ladle’s estimate is ${formatPortion(result.portionServings)}`,
+                }
+              : {
+                  portion: recipe.usualPortion,
+                  label: "Your usual portion",
+                  differs: `Your usual portion is ${formatPortion(recipe.usualPortion)}`,
+                }
+          }
+          kcalFor={(p) => logKcal(recipe, p, batch)}
+          level={level}
+        />
+      </div>
       <div className="mt-2">
         <PortionPicker
           value={portion}

@@ -73,9 +73,11 @@ The prototype supports these five tasks for moderated sessions:
 4. It's Thursday and you're having your usual adobo. Log it.
 5. Add your grandmother's braised pork from her recipe card (Add recipe → Photo → Use example card).
 
-Visitors can also bring their own recipes, links and photos. With your own plate
-photo, a portion helper shows the pan divided into servings: slide to show how
-much you took (in quarter servings), and the portion chips follow.
+Visitors can also bring their own recipes, links and photos. After every plate
+photo (the sample or your own), a portion helper shows the pan divided into
+servings: slide to show how much you took (in quarter servings), and the portion
+chips follow. With the sample photo it starts at Ladle's estimate (1 serving, a
+quarter of the batch); with your own photos, at your usual portion.
 
 The demo link is `https://www.tiktok.com/@homecook/video/demo-airfryer-garlic-chicken`.
 The older link (`…/demo-garlic-chicken`) still works and opens the same recipe.

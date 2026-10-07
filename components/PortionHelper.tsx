@@ -128,7 +128,7 @@ export function PortionHelper({
   onChange,
   servings,
   servingsLeft,
-  usualPortion,
+  start,
   kcalFor,
   level,
 }: {
@@ -139,7 +139,11 @@ export function PortionHelper({
   servings: number;
   /** From a batch: servings still in the pot. */
   servingsLeft?: number;
-  usualPortion: number;
+  /**
+   * Where the slider starts and what to call it: Ladle's estimate from the
+   * sample photo, or your usual portion for your own photos.
+   */
+  start: { portion: number; label: string; differs: string };
   kcalFor: (portion: number) => number;
   /** Estimates show "about 530". */
   level: Confidence;
@@ -174,9 +178,7 @@ export function PortionHelper({
             </p>
           )}
           <p className="text-caption mt-1 font-semibold text-confirmed">
-            {value === usualPortion
-              ? "Your usual portion"
-              : `Your usual portion is ${formatPortion(usualPortion)}`}
+            {value === start.portion ? start.label : start.differs}
           </p>
         </div>
       </div>
