@@ -19,6 +19,7 @@ import { HOW_AI_WORKS, PRIVACY, PROTOTYPE_NOTE } from "@/lib/content";
 import { formatNumber } from "@/lib/format";
 import { LB_PER_KG } from "@/lib/profile";
 import { actions, exportData, useLadle } from "@/lib/store";
+import { setTestFlags } from "@/lib/testControls";
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -160,6 +161,18 @@ export default function MePage() {
         <div className="mt-6">
           <AboutLinks caseStudyUrl={caseStudyUrl} />
         </div>
+        <Button
+          variant="secondary"
+          className="mt-4 w-full"
+          onClick={() => {
+            actions.setTourDismissed(false);
+            setTestFlags({ hideTour: false });
+            setAboutOpen(false);
+            router.push("/");
+          }}
+        >
+          Show the 60-second tour
+        </Button>
         <Button variant="secondary" className="mt-4 w-full" onClick={() => setAboutOpen(false)}>
           Done
         </Button>

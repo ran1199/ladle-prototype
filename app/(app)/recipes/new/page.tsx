@@ -27,6 +27,7 @@ import { formatAmount, sumMacros } from "@/lib/logic";
 import { ingredientFromLine } from "@/lib/mock-ai/extract";
 import { searchIngredients } from "@/lib/mock-ai/match";
 import { photoBlob, shrinkImage } from "@/lib/plate";
+import { emitEvent } from "@/lib/events";
 import { actions, useLadle } from "@/lib/store";
 import type { Ingredient, Recipe } from "@/lib/types";
 
@@ -533,16 +534,29 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
       const { src, alt, isExample } = draft.source;
       photo = { src: isExample ? src : await shrinkImage(src, 800).catch(() => src), alt };
     }
-    const id = actions.saveRecipe({
-      name: review.name.trim(),
-      servings: review.servings,
-      ingredients,
-      source,
-      photo,
-      illustration: guessIllustration(review.name),
-      cuisine: null,
-      historyNote: summary.history,
-    });
+    // For test sessions: what the participant answered about the oil.
+    const oilQuestion = questions.find((q) => /oil/i.test(q.prompt));
+    const oil = oilQuestion ? review.answers[oilQuestion.id] : undefined;
+    const id = actions.saveRecipe(
+      {
+        name: review.name.trim(),
+        servings: review.servings,
+        ingredients,
+        source,
+        photo,
+        illustration: guessIllustration(review.name),
+        cuisine: null,
+        historyNote: summary.history,
+      },
+      {
+        oilAnswer:
+          oil === undefined
+            ? undefined
+            : oil === "unsure"
+              ? "Not sure"
+              : oilQuestion!.options[oil].label,
+      },
+    );
     clearDraft();
     toast({ message: "Nice, that’s saved. Ladle will remember this recipe." });
     router.replace(`/recipes/${id}`);
@@ -599,6 +613,9 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
               id={nameId}
               value={review.name}
               onChange={(e) => update({ name: e.target.value })}
+              onBlur={() => {
+                if (review.name !== result.name) emitEvent({ type: "edit", what: "name" });
+              }}
               className="text-headline mt-1 min-h-12 w-full rounded-[var(--radius-control)] bg-surface-2 px-4"
             />
           </div>
@@ -618,7 +635,10 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
                 type="button"
                 aria-label="Fewer servings"
                 disabled={review.servings <= 1}
-                onClick={() => update({ servings: review.servings - 1 })}
+                onClick={() => {
+                  emitEvent({ type: "edit", what: "servings" });
+                  update({ servings: review.servings - 1 });
+                }}
                 className="text-title flex size-11 items-center justify-center rounded-[10px] bg-surface disabled:opacity-40"
               >
                 −
@@ -630,7 +650,10 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
                 type="button"
                 aria-label="More servings"
                 disabled={review.servings >= 24}
-                onClick={() => update({ servings: review.servings + 1 })}
+                onClick={() => {
+                  emitEvent({ type: "edit", what: "servings" });
+                  update({ servings: review.servings + 1 });
+                }}
                 className="text-title flex size-11 items-center justify-center rounded-[10px] bg-surface disabled:opacity-40"
               >
                 +
@@ -793,6 +816,7 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
         onClose={() => setEditing(null)}
         onSave={(next) => {
           const exists = review.ingredients.some((x) => x.uid === next.uid);
+          emitEvent({ type: "edit", what: exists ? "ingredient" : "added ingredient" });
           update({
             ingredients: exists
               ? review.ingredients.map((x) => (x.uid === next.uid ? next : x))
@@ -802,6 +826,7 @@ function Review({ draft, onDiscard }: { draft: Draft; onDiscard: () => void }) {
         }}
         onDelete={() => {
           if (!editing) return;
+          emitEvent({ type: "edit", what: "removed ingredient" });
           update({ ingredients: review.ingredients.filter((x) => x.uid !== editing.uid) });
           setEditing(null);
         }}

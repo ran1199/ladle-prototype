@@ -3,7 +3,10 @@
 
 export const REPO_URL = "https://github.com/ran1199/ladle-prototype";
 
-export const DEMO_LINK = "https://www.tiktok.com/@homecook/video/demo-garlic-chicken";
+export const DEMO_LINK = "https://www.tiktok.com/@homecook/video/demo-airfryer-garlic-chicken";
+
+/** The demo link from earlier versions. It still works and opens the same recipe. */
+export const OLD_DEMO_LINK = "https://www.tiktok.com/@homecook/video/demo-garlic-chicken";
 
 export const SUMMARY =
   "Ladle helps home cooks track calories without re-entering the meals they cook again and again. " +

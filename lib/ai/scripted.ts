@@ -1,21 +1,26 @@
 // The scripted engine: fixed answers for the bundled demo inputs (the demo
 // video link, the demo caption, Grandma's recipe card, the sample plate photo),
 // so the five usability-test tasks behave identically for every participant.
+// The demo recipe is "Air-fryer garlic chicken with mushrooms" (serves 4).
 // Values come from the project brief. Everything else goes to the mock engine.
 
-import { DEMO_LINK } from "../content";
+import { DEMO_LINK, OLD_DEMO_LINK } from "../content";
 import type { ExtractedRecipe, PlateAnalysis } from "./schemas";
 import type { DemoAsset, ExtractInput, RecipeSummary } from "./types";
 
-export const DEMO_CAPTION = `Garlic chicken stir-fry 🧄 serves 4
-600g boneless skinless chicken thighs
-300g broccoli
-6 cloves garlic
+export const DEMO_CAPTION = `Air-fryer garlic chicken with mushrooms 🍗 serves 4
+4 chicken legs, bone-in, skin-on (about 1 kg)
+300g king oyster mushrooms
+150g shiitake mushrooms
+200g broccoli
+1 carrot
+1 red bell pepper
+1 yellow bell pepper
+10 cloves garlic
 2 tbsp soy sauce
-1 tbsp oyster sauce
-1 tbsp honey
-1 tbsp cornstarch
-oil for frying`;
+1 tsp smoked paprika
+salt and pepper
+olive oil for brushing`;
 
 export const DEMO_CARD = {
   src: "/demo/recipe-card.jpg",
@@ -25,30 +30,42 @@ export const DEMO_CARD = {
 
 /** The bundled sample plate photo (Ran’s own photo; metadata removed). */
 export const DEMO_PLATE = {
-  src: "/demo/plate-stir-fry.jpg",
-  alt: "A bowl of chicken with broccoli, mushrooms, garlic and peppers, held over a kitchen counter.",
+  src: "/demo/plate-airfryer-chicken.jpg",
+  alt: "A bowl with a roasted chicken leg, king oyster and shiitake mushrooms, broccoli, carrot, red and yellow peppers and whole garlic cloves.",
   demoAsset: "sample-plate" as DemoAsset,
 };
 
-const STIR_FRY: ExtractedRecipe = {
-  name: "Garlic chicken stir-fry",
+/** Where the sample plate photo used to live (saved photos from older versions point here). */
+export const OLD_DEMO_PLATE_SRC = "/demo/plate-stir-fry.jpg";
+
+/** The demo recipe's stable key (its fixes and the test tasks use it). */
+export const DEMO_RECIPE_KEY = "air-fryer-garlic-chicken";
+
+// 1,893 kcal before oil; with 2 tbsp olive oil 2,133 (about 533 a serving).
+const AIR_FRYER_CHICKEN: ExtractedRecipe = {
+  name: "Air-fryer garlic chicken with mushrooms",
   servings: 4,
   servingsConfidence: "stated",
   ingredients: [
-    ing("600g boneless skinless chicken thighs", 600, "g", "chicken thighs", 600, 720, 116, 0, 28),
-    ing("300g broccoli", 300, "g", "broccoli", 300, 100, 8, 20, 1),
-    ing("6 cloves garlic", 6, "clove", "garlic", 18, 27, 1, 6, 0),
-    ing("2 tbsp soy sauce", 2, "tbsp", "soy sauce", 32, 18, 2, 2, 0),
-    ing("1 tbsp oyster sauce", 1, "tbsp", "oyster sauce", 18, 9, 0, 2, 0),
-    ing("1 tbsp honey", 1, "tbsp", "honey", 21, 64, 0, 17, 0),
-    ing("1 tbsp cornstarch", 1, "tbsp", "cornstarch", 8, 30, 0, 7, 0),
-    { ...ing("oil for frying", null, "", "neutral oil", null, 0, 0, 0, 0), vague: true },
+    // About 173 g you can eat per leg, at 214 kcal per 100 g: about 370 kcal a leg.
+    ing("4 chicken legs, bone-in, skin-on (about 1 kg)", 4, "", "chicken legs", 692, 1480, 131, 0, 104),
+    ing("300g king oyster mushrooms", 300, "g", "king oyster mushrooms", 300, 105, 7, 18, 1),
+    ing("150g shiitake mushrooms", 150, "g", "shiitake mushrooms", 150, 51, 3, 10, 1),
+    ing("200g broccoli", 200, "g", "broccoli", 200, 68, 6, 13, 1),
+    ing("1 carrot", 1, "", "carrot", 100, 41, 1, 10, 0),
+    ing("1 red bell pepper", 1, "", "red bell pepper", 150, 39, 2, 9, 0),
+    ing("1 yellow bell pepper", 1, "", "yellow bell pepper", 148, 40, 1, 9, 0),
+    ing("10 cloves garlic", 10, "clove", "garlic", 30, 45, 2, 10, 0),
+    ing("2 tbsp soy sauce", 2, "tbsp", "soy sauce", 32, 18, 3, 2, 0),
+    ing("1 tsp smoked paprika", 1, "tsp", "smoked paprika", 2.3, 6, 0, 1, 0),
+    ing("salt and pepper", null, "", "salt and pepper", null, 0, 0, 0, 0),
+    { ...ing("olive oil for brushing", null, "", "olive oil", null, 0, 0, 0, 0), vague: true },
   ],
   questions: [
     {
       id: "oil",
-      ingredientIndex: 7,
-      prompt: "How much oil did you use for frying?",
+      ingredientIndex: 11,
+      prompt: "How much olive oil did you brush on?",
       options: [
         { label: "1 tbsp", kcalDelta: 120, fat: 14 },
         { label: "2 tbsp", kcalDelta: 240, fat: 28 },
@@ -134,6 +151,16 @@ function sameLink(a: URL, b: URL): boolean {
   return clean(a) === clean(b);
 }
 
+/** The demo video link, or the older demo link (it now opens the same recipe). */
+export function isDemoLink(input: string): boolean {
+  try {
+    const url = new URL(input.trim());
+    return [DEMO_LINK, OLD_DEMO_LINK].some((d) => sameLink(url, new URL(d)));
+  } catch {
+    return false;
+  }
+}
+
 /** Sorts a pasted link: the demo video, another video (ask for the caption), or a website. */
 export function checkLink(input: string): LinkCheck {
   let url: URL;
@@ -143,7 +170,7 @@ export function checkLink(input: string): LinkCheck {
     return { ok: false, reason: "invalid" };
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") return { ok: false, reason: "invalid" };
-  if (sameLink(url, new URL(DEMO_LINK))) return { ok: true, url: DEMO_LINK, isDemo: true };
+  if (isDemoLink(url.toString())) return { ok: true, url: DEMO_LINK, isDemo: true };
   const host = url.hostname.replace(/^www\.|^m\./, "");
   if (SOCIAL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
     return { ok: false, reason: "social" };
@@ -160,50 +187,55 @@ export function isDemoCaption(text: string): boolean {
       .trim();
   const t = norm(text);
   return (
-    t.includes("garlic chicken stir fry") &&
-    t.includes("chicken thighs") &&
-    t.includes("oil for frying")
+    t.includes("air fryer garlic chicken") &&
+    t.includes("chicken legs") &&
+    t.includes("olive oil for brushing")
   );
 }
 
 /** The scripted answer for a demo recipe input, or null if it isn't one. */
 export function scriptedExtract(input: ExtractInput): ExtractedRecipe | null {
   if (input.kind === "text") {
-    if (input.sourceUrl === DEMO_LINK || isDemoCaption(input.text)) return STIR_FRY;
+    if ((input.sourceUrl && isDemoLink(input.sourceUrl)) || isDemoCaption(input.text)) {
+      return AIR_FRYER_CHICKEN;
+    }
     return null;
   }
   return input.demoAsset === "recipe-card" ? BRAISED_PORK : null;
 }
 
 /**
- * The scripted plate answer for the sample photo: it matches the garlic chicken
- * stir-fry (about 1 serving) once it's saved; before that, Ladle suggests importing it.
+ * The scripted plate answer for the sample photo: it matches the air-fryer garlic
+ * chicken (about 1 serving) once it's saved; before that, Ladle suggests importing it.
  */
 export function scriptedPlate(recipes: RecipeSummary[]): PlateAnalysis {
-  const stirFry = recipes.find((r) => r.key === "garlic-chicken-stir-fry");
-  const others = ["tomato-egg-stir-fry", "kimchi-fried-rice"].filter((id) =>
+  const chicken = recipes.find((r) => r.key === DEMO_RECIPE_KEY);
+  const others = ["chicken-adobo", "tomato-egg-stir-fry"].filter((id) =>
     recipes.some((r) => r.id === id),
   );
-  const roughGuess = { name: "Chicken and broccoli stir-fry", kcal: 480 };
-  if (!stirFry) {
+  const roughGuess = { name: "Chicken leg with roasted vegetables", kcal: 520 };
+  if (!chicken) {
     return {
       matchRecipeId: null,
       matchConfidence: 0.3,
       alternatives: others,
       portionServings: 1,
-      portionReason: "One bowl",
+      portionReason: "One chicken leg with vegetables",
       isNewFood: true,
       roughGuess,
       suggestImport: true,
     };
   }
   return {
-    matchRecipeId: stirFry.id,
+    matchRecipeId: chicken.id,
     matchConfidence: 0.86,
     alternatives: others,
     portionServings: 1,
-    portionReason: "One bowl, about a quarter of the pan",
+    portionReason: "One chicken leg with vegetables, about a quarter of the batch",
     isNewFood: false,
     roughGuess,
   };
 }
+
+/** The demo recipe's name, for "Looks like …" before it's imported. */
+export const DEMO_RECIPE_NAME = AIR_FRYER_CHICKEN.name;

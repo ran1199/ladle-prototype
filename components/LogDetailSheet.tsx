@@ -6,7 +6,8 @@
 import { useState } from "react";
 import { formatNumber } from "@/lib/format";
 import { FIX_KINDS } from "@/lib/fixes";
-import { formatPortion, kcalFor } from "@/lib/logic";
+import { exactKcalPerServing, formatPortion } from "@/lib/logic";
+import { emitEvent } from "@/lib/events";
 import { actions } from "@/lib/store";
 import type { FixKind, LogEntry, Recipe } from "@/lib/types";
 import { ConfidenceIndicator } from "./ConfidenceIndicator";
@@ -33,10 +34,13 @@ export function LogDetailSheet({
   log,
   recipe,
   onClose,
+  highlightFix = false,
 }: {
   log: LogEntry | null;
   recipe: Recipe | null;
   onClose: () => void;
+  /** Opened from the 60-second tour: "Today was different?" is outlined. */
+  highlightFix?: boolean;
 }) {
   const toast = useToast();
   // Keep showing the last log while the sheet slides closed.
@@ -61,7 +65,7 @@ export function LogDetailSheet({
   const adjustments = current.adjustments ?? [];
   const adjustmentKcal = adjustments.reduce((t, a) => t + a.kcalDelta, 0);
   const kcalPerServing = recipe
-    ? kcalFor(recipe, 1)
+    ? exactKcalPerServing(recipe)
     : (current.kcal - adjustmentKcal) / current.portion;
   const kcal = Math.round(kcalPerServing * portion) + adjustmentKcal;
   const kinds = recipe ? FIX_KINDS : FIX_KINDS.filter((k) => k.kind === "other");
@@ -70,6 +74,7 @@ export function LogDetailSheet({
   function save() {
     if (!current) return;
     actions.updateLog(current.id, { portion, at: withTime(current.at, time) });
+    emitEvent({ type: "edit", what: "log" });
     toast({ message: `Changed · ${formatNumber(kcal)} kcal` });
     onClose();
   }
@@ -93,7 +98,10 @@ export function LogDetailSheet({
         </div>
       </div>
 
-      <section aria-labelledby="fix-heading" className="mb-5">
+      <section
+        aria-labelledby="fix-heading"
+        className={`mb-5 ${highlightFix ? "-mx-3 rounded-[var(--radius-control)] p-3 ring-2 ring-accent" : ""}`}
+      >
         <h3 id="fix-heading" className="text-headline mb-2">
           Today was different?
         </h3>

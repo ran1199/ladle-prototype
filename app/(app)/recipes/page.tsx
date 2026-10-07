@@ -15,7 +15,8 @@ import { useToast } from "@/components/Toast";
 import { useLongPress } from "@/components/useLongPress";
 import { Button, Card, ScreenHeader } from "@/components/ui";
 import { formatNumber } from "@/lib/format";
-import { formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
+import { exactKcalPerServing, formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
+import type { LogVia } from "@/lib/events";
 import { actions, useLadle } from "@/lib/store";
 import type { Fix, Recipe } from "@/lib/types";
 
@@ -106,8 +107,12 @@ export default function RecipesPage() {
     : recipes;
   const pickerRecipe = recipes.find((r) => r.id === (pickerId ?? lastPickerId)) ?? null;
 
-  function log(recipe: Recipe, amount: number) {
-    const entry = actions.logRecipe(recipe.id, amount);
+  function log(recipe: Recipe, amount: number, via: LogVia) {
+    const entry = actions.logRecipe(recipe.id, amount, {
+      via,
+      suggestedPortion: recipe.usualPortion,
+      acceptedEstimate: amount === recipe.usualPortion,
+    });
     if (!entry) return;
     toast({
       message: `${recipe.name} logged · ${formatNumber(entry.kcal)} kcal`,
@@ -168,7 +173,7 @@ export default function RecipesPage() {
               <RecipeCard
                 fixes={state?.data.fixes ?? []}
                 recipe={r}
-                onLog={() => log(r, r.usualPortion)}
+                onLog={() => log(r, r.usualPortion, "one-tap")}
                 onPickPortion={() => openPicker(r)}
               />
             </li>
@@ -187,12 +192,12 @@ export default function RecipesPage() {
               key={pickerRecipe.id}
               value={portion}
               onChange={setPortion}
-              kcalPerServing={kcalFor(pickerRecipe, 1)}
+              kcalPerServing={exactKcalPerServing(pickerRecipe)}
             />
             <Button
               className="mt-5 w-full"
               onClick={() => {
-                log(pickerRecipe, portion);
+                log(pickerRecipe, portion, "portion-picker");
                 setPickerId(null);
               }}
             >

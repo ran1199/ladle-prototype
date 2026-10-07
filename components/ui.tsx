@@ -92,6 +92,7 @@ export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
+      data-back=""
       className="text-headline inline-flex min-h-11 items-center gap-0.5 rounded-lg px-2 text-accent-strong"
     >
       <svg

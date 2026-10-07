@@ -30,8 +30,8 @@ function servingsText(n: number) {
 
 export function useLogFromBatch() {
   const toast = useToast();
-  return (batch: Batch, recipe: Recipe) => {
-    const log = actions.logRecipe(recipe.id, 1, { batchId: batch.id });
+  return (batch: Batch, recipe: Recipe, via: "leftovers" | "pantry") => {
+    const log = actions.logRecipe(recipe.id, 1, { batchId: batch.id, via });
     if (!log) return;
     toast({
       message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal`,
@@ -55,7 +55,7 @@ export function LeftoverNudge({ batch, recipe }: { batch: Batch; recipe: Recipe 
       </div>
       <Button
         className="shrink-0 px-4"
-        onClick={() => logFromBatch(batch, recipe)}
+        onClick={() => logFromBatch(batch, recipe, "leftovers")}
         aria-label={`Log one serving of ${recipe.name}, ${formatNumber(logKcal(recipe, 1, batch))} kcal`}
       >
         Log
@@ -144,7 +144,7 @@ export function BatchCard({ batch, recipe }: { batch: Batch; recipe: Recipe }) {
         />
       </div>
       <div className="mt-4 flex items-center gap-2">
-        <Button className="flex-1" onClick={() => logFromBatch(batch, recipe)}>
+        <Button className="flex-1" onClick={() => logFromBatch(batch, recipe, "pantry")}>
           Log one · {formatNumber(logKcal(recipe, 1, batch))} kcal
         </Button>
         <div className="flex items-center gap-1" role="group" aria-label="Fix the count">

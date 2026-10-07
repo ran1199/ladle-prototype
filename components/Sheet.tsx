@@ -16,6 +16,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { emitEvent } from "@/lib/events";
 
 type SheetHost = {
   element: HTMLElement | null;
@@ -101,6 +102,7 @@ export function Sheet({
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") {
       e.stopPropagation();
+      emitEvent({ type: "wrong-turn", what: "closed a sheet" });
       onClose();
       return;
     }
@@ -126,7 +128,10 @@ export function Sheet({
         aria-hidden="true"
         className="absolute inset-0 bg-[var(--backdrop)]"
         style={{ animation: `${closing ? "fade-out" : "fade-in"} ${anim}` }}
-        onClick={onClose}
+        onClick={() => {
+          emitEvent({ type: "wrong-turn", what: "closed a sheet" });
+          onClose();
+        }}
       />
       <div
         ref={panelRef}

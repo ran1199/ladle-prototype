@@ -94,7 +94,7 @@ function splitList(line: string): string[] {
 
 const VAGUE =
   /\b(?:for (?:deep[- ]|shallow[- ]|pan[- ])?frying|to fry|to taste|as (?:needed|required|desired)|a little|little bit|a bit|a splash|splash of|drizzle|a dash|handful|a knob|knob of|generous(?:ly)?|some|a glug|for greasing|for brushing|for drizzling|for (?:the )?garnish|to garnish|to serve|for serving|few drops|optional|a pinch)\b/i;
-const FRYING = /\b(?:fry|frying|deep|shallow|generous(?:ly)?|glug)\b/i;
+const FRYING = /\b(?:fry|frying|deep|shallow|generous(?:ly)?|glug|brush|brushing)\b/i;
 
 type Option = { label: string; unit: "tsp" | "tbsp" | "cup"; amount: number };
 const OPTIONS: Record<string, Option[]> = {
@@ -371,7 +371,9 @@ export function extractFromText(text: string, hints: ExtractHints = {}): Extract
         ingredientIndex: index,
         prompt: /\bfry(?:ing)?\b/i.test(w.text)
           ? `How much ${w.entry!.category === "oil" ? "oil" : w.item} did you use for frying?`
-          : `How much is “${w.text}”?`,
+          : /\bbrush(?:ing)?\b/i.test(w.text)
+            ? `How much ${w.item.toLowerCase()} did you brush on?`
+            : `How much is “${w.text}”?`,
         options: w.options!.map(({ label, kcalDelta, fat }) => ({ label, kcalDelta, fat })),
       });
       return;

@@ -56,6 +56,7 @@ export function rankRecipes(
   const now = new Date(context.now);
   const t = now.getTime();
   const meal = mealTypeAt(now);
+  const weekday = context.weekday ?? now.getDay();
 
   return recipes
     .map((r) => {
@@ -89,7 +90,7 @@ export function rankRecipes(
       const sameSlot = logs.filter((l) => {
         const d = new Date(l.at);
         const hours = Math.abs(d.getHours() + d.getMinutes() / 60 - (now.getHours() + now.getMinutes() / 60));
-        return d.getDay() === now.getDay() && hours <= 2 && t - d.getTime() > HOUR;
+        return d.getDay() === weekday && hours <= 2 && t - d.getTime() > HOUR;
       }).length;
       if (sameSlot > 0) {
         score += Math.min(3, 1.5 * sameSlot);

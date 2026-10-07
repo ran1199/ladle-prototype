@@ -5,6 +5,7 @@
 // It is deleted once the meal is logged: Ladle doesn't keep plate photos.
 
 import type { PlateAnalysis } from "./ai/schemas";
+import { DEMO_PLATE, OLD_DEMO_PLATE_SRC } from "./ai/scripted";
 import { storage } from "./storage";
 import type { PhotoColor } from "./types";
 
@@ -23,7 +24,12 @@ export type PendingPlate = {
 };
 
 export function getPlate(): PendingPlate | null {
-  return storage.get<PendingPlate>(KEY);
+  const plate = storage.get<PendingPlate>(KEY);
+  // The sample photo was renamed; a photo saved by an older version still shows.
+  if (plate?.photo.src === OLD_DEMO_PLATE_SRC) {
+    return { ...plate, photo: { ...plate.photo, src: DEMO_PLATE.src, alt: DEMO_PLATE.alt } };
+  }
+  return plate;
 }
 
 export function savePlate(plate: PendingPlate): void {

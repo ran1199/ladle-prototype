@@ -10,6 +10,7 @@ import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { BasketIcon, CameraIcon, RecipesIcon } from "@/components/icons";
 import { LogDetailSheet } from "@/components/LogDetailSheet";
+import { TourCard } from "@/components/TourCard";
 import { Card, ScreenHeader } from "@/components/ui";
 import { formatLongDate, formatNumber, formatTime, isSameDay } from "@/lib/format";
 import {
@@ -167,6 +168,8 @@ function PendingPlateCard() {
 export default function TodayPage() {
   const state = useLadle();
   const [openLogId, setOpenLogId] = useState<string | null>(null);
+  // Opened from the tour's "Fix a log": show "Today was different?" first.
+  const [fromTour, setFromTour] = useState(false);
 
   if (!state) return <ScreenHeader title="Today" />;
 
@@ -189,6 +192,15 @@ export default function TodayPage() {
         subtitle={formatLongDate(now)}
       />
       <div className="space-y-4 px-5 pb-8">
+        <TourCard
+          data={state.data}
+          prefs={state.prefs}
+          onOpenLog={(log) => {
+            setFromTour(true);
+            setOpenLogId(log.id);
+          }}
+        />
+
         {returning && (
           <Card>
             <p className="text-headline">Welcome back. Pick up where you left off.</p>
@@ -239,7 +251,10 @@ export default function TodayPage() {
                         key={l.id}
                         log={l}
                         recipe={recipeById(l.recipeId)}
-                        onOpen={() => setOpenLogId(l.id)}
+                        onOpen={() => {
+                          setFromTour(false);
+                          setOpenLogId(l.id);
+                        }}
                       />
                     ))}
                   </ul>
@@ -253,6 +268,7 @@ export default function TodayPage() {
       <LogDetailSheet
         log={openLog}
         recipe={openLog ? recipeById(openLog.recipeId) : null}
+        highlightFix={fromTour}
         onClose={() => setOpenLogId(null)}
       />
 
