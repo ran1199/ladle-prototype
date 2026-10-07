@@ -4,6 +4,7 @@
 // saved recipe when the user chooses "Always". Ladle never changes a recipe
 // without the user's confirmation.
 
+import { formatNumber } from "./format";
 import { formatAmount, kcalFor } from "./logic";
 import type { Fix, FixKind, Ingredient, Recipe } from "./types";
 
@@ -45,7 +46,7 @@ export const OTHER_PRESETS: { detail: string; label: string; kcal: number; note:
 export type FixOption = {
   kind: FixKind;
   detail: string;
-  /** Chip text, e.g. "+1 tbsp · +120". */
+  /** Option text, saying where the change happens, e.g. "+1 tbsp in the pan · +120 for the batch". */
   chip: string;
   /** Short label stored on the log, e.g. "More oil: +1 tbsp". */
   label: string;
@@ -84,7 +85,7 @@ export function fixOptions(
     return OTHER_PRESETS.map((p) => ({
       kind,
       detail: p.detail,
-      chip: `${p.label} · ${signed(p.kcal)}`,
+      chip: `${p.label} · ${signed(p.kcal)} on your plate`,
       label: p.label,
       plateDelta: p.kcal,
       potDelta: recipe ? p.kcal * recipe.servings : null,
@@ -105,7 +106,7 @@ export function fixOptions(
         return {
           kind,
           detail: `${kind === "more-oil" ? "+" : "-"}${n} tbsp`,
-          chip: `${kind === "more-oil" ? "+" : "−"}${n} tbsp · ${signed(potDelta)}`,
+          chip: `${kind === "more-oil" ? "+" : "−"}${n} tbsp in the pan · ${signed(potDelta)} for the batch`,
           label: `${kind === "more-oil" ? "More" : "Less"} oil: ${kind === "more-oil" ? "+" : "−"}${n} tbsp`,
           plateDelta: share(recipe, potDelta, portion),
           potDelta,
@@ -122,11 +123,11 @@ export function fixOptions(
       {
         kind,
         detail: "half",
-        chip: `Half the recipe · ${signed(-baseKcal / 2)}`,
+        chip: `Cooked half the recipe · ${signed(-total / 2)} for the batch`,
         label: "Halved the batch",
         plateDelta: -Math.round(baseKcal / 2),
         potDelta: -Math.round(total / 2),
-        alwaysNote: `save as a half batch (${Math.round(total)} → ${Math.round(total / 2)} kcal)`,
+        alwaysNote: `save as a half batch (${formatNumber(total)} → ${formatNumber(total / 2)} kcal)`,
       },
     ];
   }
@@ -140,7 +141,7 @@ export function fixOptions(
       {
         kind,
         detail: `${swap.from}>${swap.to}`,
-        chip: `${ing.item} → ${swap.to} · ${signed(potDelta)}`,
+        chip: `${ing.item} → ${swap.to} in the pan · ${signed(potDelta)} for the batch`,
         label: `Swapped ${ing.item} for ${swap.to}`,
         plateDelta: share(recipe, potDelta, portion),
         potDelta,
@@ -167,7 +168,7 @@ export function customOption(
   return {
     kind: "other",
     detail: `${CUSTOM}${perServing}:${summary}`,
-    chip: `${summary} · ${signed(plateDelta)}`,
+    chip: `${summary} · ${signed(plateDelta)} on your plate`,
     label: summary,
     plateDelta,
     potDelta: recipe ? perServing * recipe.servings : null,

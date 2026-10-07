@@ -12,7 +12,8 @@ export type LogVia =
   | "one-tap" // a "Log" button on a recipe card or the Recipes list
   | "portion-picker" // "Log a portion" with the portion chips (Recipes list)
   | "leftovers" // the leftovers nudge on Today
-  | "pantry" // "Log one" on a Pantry batch
+  | "pantry" // "Log" on a Pantry batch
+  | "suggestion" // the "Your usual" card on Today
   | "food" // other food: barcode, search, restaurant, rough estimate
   | "other";
 

@@ -24,7 +24,7 @@ import { DEMO_PLATE, DEMO_RECIPE_NAME } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
 import { startDraft } from "@/lib/draft";
 import { emitEvent } from "@/lib/events";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, isEstimate, kcalNumber, shownKcal } from "@/lib/format";
 import {
   activeBatch,
   exactKcalPerServing,
@@ -450,12 +450,12 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
   function logIt() {
     if (!recipe) return;
     const log = actions.logRecipe(recipe.id, portion, logOpts());
-    if (log) finish(`Nice, that’s logged · ${formatNumber(log.kcal)} kcal`, log.id);
+    if (log) finish(`Nice, that’s logged · ${kcalNumber(log.kcal, log.confidence)} kcal`, log.id);
   }
 
   function logRough(food: { name: string; kcal: number }) {
     const log = actions.logFood({ name: food.name, kcal: food.kcal, confidence: "rough" });
-    finish(`Logged as a rough estimate · ${formatNumber(log.kcal)} kcal`, log.id);
+    finish(`Logged as a rough estimate · ${kcalNumber(log.kcal, "rough")} kcal`, log.id);
   }
 
   function logOther(food: FoodResult, servings: number, confidence: Confidence) {
@@ -466,7 +466,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
       portion: servings,
     });
     finish(
-      `${confidence === "rough" ? "Logged as a rough estimate" : `${food.name} logged`} · ${formatNumber(log.kcal)} kcal`,
+      `${confidence === "rough" ? "Logged as a rough estimate" : `${food.name} logged`} · ${kcalNumber(log.kcal, confidence)} kcal`,
       log.id,
     );
   }
@@ -538,7 +538,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
               variant={result.suggestImport ? "secondary" : "primary"}
               onClick={() => logRough(roughGuess)}
             >
-              Log as a rough estimate · {formatNumber(roughGuess.kcal)} kcal
+              Log as a rough estimate · {kcalNumber(roughGuess.kcal, "rough")} kcal
             </Button>
             {result.suggestImport ? (
               <Button className="order-first" onClick={importDemoRecipe}>
@@ -576,6 +576,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
     ? recipeTotalKcal(recipe) / batch.servingsMade
     : exactKcalPerServing(recipe);
   const kcal = logKcal(recipe, portion, batch);
+  const level = recipeConfidence(recipe, fixes);
   return (
     <Panel>
       <div className="flex items-center gap-3">
@@ -632,6 +633,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
             servingsLeft={batch ? batch.servingsLeft : undefined}
             usualPortion={recipe.usualPortion}
             kcalFor={(p) => logKcal(recipe, p, batch)}
+            level={level}
           />
         </div>
       ) : (
@@ -645,14 +647,20 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
         </>
       )}
       <div className="mt-2">
-        <PortionPicker value={portion} onChange={setPortion} kcalPerServing={perServing} />
+        <PortionPicker
+          value={portion}
+          onChange={setPortion}
+          kcalPerServing={perServing}
+          level={level}
+        />
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-3">
         <p className="font-display tabular text-[34px] leading-10 font-semibold">
-          {formatNumber(kcal)} <span className="text-title">kcal</span>
+          {isEstimate(level) && <span className="text-title">about </span>}
+          {formatNumber(shownKcal(kcal, level))} <span className="text-title">kcal</span>
         </p>
-        <ConfidenceIndicator level={recipeConfidence(recipe, fixes)} recipe={recipe} />
+        <ConfidenceIndicator level={level} recipe={recipe} />
       </div>
 
       <Button className="mt-4 w-full" onClick={logIt}>

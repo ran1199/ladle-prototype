@@ -5,7 +5,8 @@
 
 import { useState } from "react";
 import { formatAmount, formatPortion } from "@/lib/logic";
-import { formatNumber } from "@/lib/format";
+import { kcalNumber } from "@/lib/format";
+import type { Confidence } from "@/lib/types";
 
 const PRESETS = [0.5, 1, 1.5, 2];
 const STEP = 0.25;
@@ -17,16 +18,19 @@ export function PortionPicker({
   onChange,
   kcalPerServing,
   label = "Portion",
+  level = "confirmed",
 }: {
   value: number;
   onChange: (portion: number) => void;
   kcalPerServing: number;
   label?: string;
+  /** The confidence of these numbers: estimates show "about 270". */
+  level?: Confidence;
 }) {
   const [custom, setCustom] = useState(!PRESETS.includes(value));
 
   const chip = (active: boolean) =>
-    `flex min-h-12 flex-col items-center justify-center rounded-[var(--radius-control)] px-2 transition-colors duration-200 ${
+    `flex min-h-12 flex-col items-center justify-center py-1 rounded-[var(--radius-control)] px-2 transition-colors duration-200 ${
       active ? "bg-ink text-bg" : "bg-surface-2 text-ink hover:brightness-[0.97]"
     }`;
 
@@ -50,7 +54,7 @@ export function PortionPicker({
               <span
                 className={`text-[11px] leading-[13px] tabular ${active ? "opacity-80" : "text-ink-2"}`}
               >
-                {formatNumber(kcalPerServing * p)}
+                {kcalNumber(kcalPerServing * p, level)}
               </span>
             </button>
           );

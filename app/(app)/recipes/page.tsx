@@ -14,7 +14,8 @@ import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 import { useLongPress } from "@/components/useLongPress";
 import { Button, Card, ScreenHeader } from "@/components/ui";
-import { formatNumber } from "@/lib/format";
+import { LogButton } from "@/components/LogButton";
+import { kcalNumber } from "@/lib/format";
 import { exactKcalPerServing, formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
 import type { LogVia } from "@/lib/events";
 import { actions, useLadle } from "@/lib/store";
@@ -33,43 +34,49 @@ function RecipeCard({
 }) {
   const press = useLongPress(onPickPortion);
   const perServing = kcalFor(recipe, 1);
+  const level = recipeConfidence(recipe, fixes);
   return (
-    <Card className="flex gap-3 p-4">
-      <DishIllustration kind={recipe.illustration} seed={recipe.id} size={64} />
-      <div className="min-w-0 flex-1">
-        <h2 className="text-headline">
-          <Link
-            href={`/recipes/${recipe.id}`}
-            className="underline-offset-4 hover:underline focus-visible:underline"
-          >
-            {recipe.name}
-          </Link>
-        </h2>
-        <p className="text-caption tabular mt-0.5 text-ink-2">
-          {formatNumber(perServing)} kcal per serving · {recipe.servings}{" "}
-          {recipe.servings === 1 ? "serving" : "servings"}
-        </p>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3">
-          {recipe.cuisine && (
-            <span className="text-caption rounded-full bg-surface-2 px-2.5 py-0.5 text-ink-2">
-              {recipe.cuisine}
-            </span>
-          )}
-          <ConfidenceIndicator level={recipeConfidence(recipe, fixes)} recipe={recipe} />
+    <Card className="p-4">
+      <div className="flex gap-3">
+        <DishIllustration kind={recipe.illustration} seed={recipe.id} size={64} />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-headline">
+            <Link
+              href={`/recipes/${recipe.id}`}
+              className="underline-offset-4 hover:underline focus-visible:underline"
+            >
+              {recipe.name}
+            </Link>
+          </h2>
+          <p className="text-caption tabular mt-0.5 text-ink-2">
+            {kcalNumber(perServing, level)} kcal per serving · {recipe.servings}{" "}
+            {recipe.servings === 1 ? "serving" : "servings"}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3">
+            {recipe.cuisine && (
+              <span className="text-caption rounded-full bg-surface-2 px-2.5 py-0.5 text-ink-2">
+                {recipe.cuisine}
+              </span>
+            )}
+            <ConfidenceIndicator level={level} recipe={recipe} />
+          </div>
         </div>
-      </div>
-      <div className="flex shrink-0 flex-col items-end justify-between gap-1">
         <button
           type="button"
           onClick={onPickPortion}
           aria-label={`Choose a portion of ${recipe.name}`}
-          className="-mt-1 -mr-1 flex size-11 items-center justify-center rounded-full text-ink-2 hover:bg-surface-2"
+          className="-mt-1 -mr-1 flex size-11 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-surface-2"
         >
           <MoreIcon />
         </button>
-        <Button
-          className="min-h-11 px-4 select-none [-webkit-touch-callout:none]"
-          aria-label={`Log ${formatPortion(recipe.usualPortion)} of ${recipe.name}, ${formatNumber(kcalFor(recipe, recipe.usualPortion))} kcal`}
+      </div>
+      <div className="mt-2 flex justify-end">
+        <LogButton
+          name={recipe.name}
+          portion={recipe.usualPortion}
+          kcal={kcalFor(recipe, recipe.usualPortion)}
+          level={level}
+          className="min-h-11 select-none [-webkit-touch-callout:none]"
           onPointerDown={press.onPointerDown}
           onPointerUp={press.onPointerUp}
           onPointerLeave={press.onPointerLeave}
@@ -78,9 +85,7 @@ function RecipeCard({
           onClick={() => {
             if (!press.consumeLongPress()) onLog();
           }}
-        >
-          Log
-        </Button>
+        />
       </div>
     </Card>
   );
@@ -115,7 +120,7 @@ export default function RecipesPage() {
     });
     if (!entry) return;
     toast({
-      message: `${recipe.name} logged · ${formatNumber(entry.kcal)} kcal`,
+      message: `${recipe.name} logged · ${kcalNumber(entry.kcal, entry.confidence)} kcal`,
       actionLabel: "Undo",
       onAction: () => actions.deleteLog(entry.id),
     });
@@ -193,6 +198,7 @@ export default function RecipesPage() {
               value={portion}
               onChange={setPortion}
               kcalPerServing={exactKcalPerServing(pickerRecipe)}
+              level={recipeConfidence(pickerRecipe, state?.data.fixes ?? [])}
             />
             <Button
               className="mt-5 w-full"
@@ -201,7 +207,12 @@ export default function RecipesPage() {
                 setPickerId(null);
               }}
             >
-              Log {formatPortion(portion)} · {formatNumber(kcalFor(pickerRecipe, portion))} kcal
+              Log {formatPortion(portion)} ·{" "}
+              {kcalNumber(
+                kcalFor(pickerRecipe, portion),
+                recipeConfidence(pickerRecipe, state?.data.fixes ?? []),
+              )}{" "}
+              kcal
             </Button>
           </>
         )}

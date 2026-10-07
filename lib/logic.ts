@@ -11,8 +11,23 @@ import {
 import { recipeTotalKcal } from "./seed";
 import type { AppData, Batch, Confidence, Fix, LogEntry, Recipe } from "./types";
 
-/** Logs needed before a recipe shows "Your recipe ✓". */
+/** Confirmed portions needed before a recipe shows "Your recipe ✓". */
 export const CONFIRMATIONS_NEEDED = 3;
+
+/**
+ * Ways of logging where the user actively confirms the portion. Only these
+ * count towards "Your recipe ✓"; quick logs (one-tap, "Your usual", leftovers,
+ * Pantry) don't.
+ */
+export const CONFIRMING_VIA: NonNullable<LogEntry["via"]>[] = [
+  "plate-photo",
+  "portion-helper",
+  "portion-picker",
+];
+
+export function confirmsPortion(via: LogEntry["via"]): boolean {
+  return !!via && CONFIRMING_VIA.includes(via);
+}
 
 /** How long a batch shows in the leftovers nudge. */
 export const BATCH_FRESH_DAYS = 4;
@@ -181,10 +196,13 @@ export function addRecipeLog(
     at?: Date;
     photoColor?: LogEntry["photoColor"];
     via?: LogEntry["via"];
+    /** Counts towards "Your recipe ✓". Defaults to whether `via` confirms the portion. */
+    confirmed?: boolean;
   } = {},
 ): { data: AppData; log: LogEntry | null } {
   const recipe = data.recipes.find((r) => r.id === recipeId);
   if (!recipe) return { data, log: null };
+  const confirmed = opts.confirmed ?? confirmsPortion(opts.via);
   const at = (opts.at ?? new Date()).toISOString();
   const batch = opts.batchId ? (data.batches.find((b) => b.id === opts.batchId) ?? null) : null;
   const log: LogEntry = {
@@ -196,7 +214,8 @@ export function addRecipeLog(
     portion,
     kcal: logKcal(recipe, portion, batch),
     confidence: recipeConfidence(recipe, data.fixes),
-    countedConfirmation: true,
+    confirmed,
+    countedConfirmation: confirmed,
     prevLastEatenAt: recipe.lastEatenAt,
     ...(opts.photoColor ? { photoColor: opts.photoColor } : {}),
     ...(opts.via ? { via: opts.via } : {}),
@@ -207,7 +226,9 @@ export function addRecipeLog(
       ...data,
       logs: [...data.logs, log],
       recipes: data.recipes.map((r) =>
-        r.id === recipeId ? { ...r, confirmedLogs: r.confirmedLogs + 1, lastEatenAt: at } : r,
+        r.id === recipeId
+          ? { ...r, confirmedLogs: r.confirmedLogs + (confirmed ? 1 : 0), lastEatenAt: at }
+          : r,
       ),
       batches: opts.batchId
         ? data.batches.map((b) =>
@@ -248,7 +269,11 @@ export function removeLog(data: AppData, logId: string): AppData {
   };
 }
 
-/** Changes a log's portion and/or time. Calories follow the recipe; batches stay in step. */
+/**
+ * Changes a log's portion and/or time. Calories follow the recipe; batches stay
+ * in step. Changing the portion confirms it: a quick log now counts towards
+ * "Your recipe ✓".
+ */
 export function editLog(
   data: AppData,
   logId: string,
@@ -264,11 +289,25 @@ export function editLog(
     (recipe ? logKcal(recipe, portion, batch) : Math.round((base / log.portion) * portion)) +
     adjustmentKcal(log);
   const delta = portion - log.portion;
+  const newlyConfirmed = delta !== 0 && !!recipe && !log.countedConfirmation;
   return {
     ...data,
     logs: data.logs.map((l) =>
-      l.id === logId ? { ...l, portion, kcal, at: changes.at ?? l.at } : l,
+      l.id === logId
+        ? {
+            ...l,
+            portion,
+            kcal,
+            at: changes.at ?? l.at,
+            ...(newlyConfirmed ? { confirmed: true, countedConfirmation: true } : {}),
+          }
+        : l,
     ),
+    recipes: newlyConfirmed
+      ? data.recipes.map((r) =>
+          r.id === recipe.id ? { ...r, confirmedLogs: r.confirmedLogs + 1 } : r,
+        )
+      : data.recipes,
     batches: data.batches.map((b) =>
       b.id === log.batchId && delta !== 0
         ? {

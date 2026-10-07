@@ -6,7 +6,8 @@
 // servings already eaten are shown faded ("4 of 6 left"). The portion chips
 // below stay in step with the slider.
 
-import { formatNumber } from "@/lib/format";
+import { kcalNumber } from "@/lib/format";
+import type { Confidence } from "@/lib/types";
 import { formatAmount, formatPortion } from "@/lib/logic";
 
 const STEP = 0.25;
@@ -39,10 +40,16 @@ export function shareText(share: number): string {
 }
 
 /** The live label, e.g. "¼ of the pan · 1 serving · 533 kcal". */
-export function portionLabel(portion: number, total: number, kcal: number, container: string) {
+export function portionLabel(
+  portion: number,
+  total: number,
+  kcal: number,
+  container: string,
+  level: Confidence = "confirmed",
+) {
   const share = shareText(Math.min(1, portion / total));
   const of = share === "all" ? `all of the ${container}` : `${share} of the ${container}`;
-  return `${of} · ${formatPortion(portion)} · ${formatNumber(kcal)} kcal`;
+  return `${of} · ${formatPortion(portion)} · ${kcalNumber(kcal, level)} kcal`;
 }
 
 /** A point on the pan's rim, `turn` of the way round from the top (clockwise). */
@@ -123,6 +130,7 @@ export function PortionHelper({
   servingsLeft,
   usualPortion,
   kcalFor,
+  level,
 }: {
   photo: { src: string; alt: string };
   value: number;
@@ -133,13 +141,15 @@ export function PortionHelper({
   servingsLeft?: number;
   usualPortion: number;
   kcalFor: (portion: number) => number;
+  /** Estimates show "about 530". */
+  level: Confidence;
 }) {
   const fromBatch = servingsLeft !== undefined;
   const container = fromBatch ? "pot" : "pan";
   const max = Math.max(STEP, fromBatch ? servingsLeft : servings);
   const eaten = fromBatch ? Math.max(0, servings - servingsLeft) : 0;
   const shown = Math.min(value, max);
-  const label = portionLabel(value, servings, kcalFor(value), container);
+  const label = portionLabel(value, servings, kcalFor(value), container, level);
 
   return (
     <div>

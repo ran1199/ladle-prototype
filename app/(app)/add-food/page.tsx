@@ -19,7 +19,7 @@ import { useToast } from "@/components/Toast";
 import { BackLink, Button, Card, ScreenHeader } from "@/components/ui";
 import type { FoodResult } from "@/lib/ai";
 import { isBarcode, type LabelFood } from "@/lib/barcode";
-import { formatNumber } from "@/lib/format";
+import { kcalNumber } from "@/lib/format";
 import { actions, useLadle } from "@/lib/store";
 import type { Confidence } from "@/lib/types";
 
@@ -205,7 +205,7 @@ export default function AddFoodPage() {
       portion: servings,
     });
     toast({
-      message: `${p.food.name} logged · ${formatNumber(entry.kcal)} kcal`,
+      message: `${p.food.name} logged · ${kcalNumber(entry.kcal, entry.confidence)} kcal`,
       actionLabel: "Undo",
       onAction: () => actions.deleteLog(entry.id),
     });
