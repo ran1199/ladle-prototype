@@ -369,14 +369,14 @@ const scenes = {
   // Snap your plate: camera → sample → result → pan zoom → slider → Log it → Use photo.
   async 6(s) {
     await startScene(6);
-    await tapOn(s, "snaps her plate.", p.getByRole("link", { name: /Camera/ }), -1.6);
+    await tapOn(s, "snaps her plate.", p.getByRole("link", { name: /Camera/ }), -0.2);
     await tap(p.getByRole("button", { name: "Use sample photo" }), { hold: 0 });
     await shortThinking(p.getByRole("button", { name: "Log it" }));
     note("Looks like… on screen", timeOf(s.narration, "Ladle recognizes the dish,"));
     const pan = p.getByText("How much did you take?").locator("xpath=ancestor::div[2]");
-    await until(timeOf(s.narration, "The pan shows her share:") - 0.3);
+    await until(timeOf(s.narration, "The pot shows her share:") - 0.3);
     await zoomTo(pan.locator("svg").first().locator(".."), 1.4);
-    note("pan zoom", timeOf(s.narration, "The pan shows her share:"));
+    note("pan zoom", timeOf(s.narration, "The pot shows her share:"));
     await until(timeOf(s.narration, "If she took more,") - 0.3);
     zoomOut();
     // Drag the slider up a step and back to 1 serving.

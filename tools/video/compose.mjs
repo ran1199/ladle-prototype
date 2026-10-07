@@ -92,7 +92,7 @@ function closingScene(scene, out) {
   ff([
     "-i", app,
     "-loop", "1", "-framerate", String(fps), "-t", String(scene.seconds), "-i", resolve(CARDS, "end.png"),
-    "-filter_complex", `[1:v]format=yuv420p[e];[0:v][e]xfade=transition=fade:duration=0.8:offset=${(t - 0.4).toFixed(3)},format=yuv420p[v]`,
+    "-filter_complex", `[0:v]settb=1/${fps},fps=${fps},format=yuv420p[a];[1:v]settb=1/${fps},fps=${fps},format=yuv420p[e];[a][e]xfade=transition=fade:duration=0.8:offset=${(t - 0.4).toFixed(3)},format=yuv420p[v]`,
     "-map", "[v]", "-t", String(scene.seconds), ...ENCODE, out,
   ]);
 }

@@ -5,7 +5,7 @@
 // 150 words a minute (plus pauses) doesn't fit. See WINDOWS_NOTE.
 
 export const WINDOWS_NOTE =
-  "Scenes 1, 2 and 9 were lengthened and 6, 7 and 8 shortened so every scene's narration fits; the total stays 4:00.";
+  "Scenes 1, 2 and 9 were lengthened and 6, 7 and 8 shortened so every scene's narration fits; the total stays 4:00. Scene 6 says \"pot\" (Ran's OK): with the batch from scene 5 active, the app shows \"¼ of the pot\".";
 
 export const SCENES = [
   {
@@ -50,8 +50,8 @@ export const SCENES = [
     name: "Snap your plate",
     seconds: 35, // script: 40
     narration:
-      "Dinner's ready, so Maya snaps her plate. Ladle recognizes the dish, and because it already knows the recipe, the photo only has to answer one question: how much did she take? The pan shows her share: one of four servings, one chicken leg with vegetables. If she took more, she slides it. One tap logs about 530 calories, and her photo becomes the recipe's picture.",
-    caption: { text: "The photo measures her share", at: "The pan shows her share" },
+      "Dinner's ready, so Maya snaps her plate. Ladle recognizes the dish, and because it already knows the recipe, the photo only has to answer one question: how much did she take? The pot shows her share: one of four servings, one chicken leg with vegetables. If she took more, she slides it. One tap logs about 530 calories, and her photo becomes the recipe's picture.",
+    caption: { text: "The photo measures her share", at: "The pot shows her share" },
   },
   {
     n: 7,
