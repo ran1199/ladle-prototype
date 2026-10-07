@@ -43,3 +43,7 @@ next-env.d.ts
 
 # on-device OCR files, copied from node_modules at build time
 /public/tesseract
+
+# Demo video renders (large media; never committed)
+/video-output/
+/tools/video/frames/

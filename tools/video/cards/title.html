@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face { font-family: Fraunces; src: url(file:///home/user/ladle-prototype/tools/video/fonts/Fraunces-SemiBold.ttf); font-weight: 600; }
+@font-face { font-family: Inter; src: url(file:///home/user/ladle-prototype/tools/video/fonts/Inter-Medium.ttf); font-weight: 500; }
+@font-face { font-family: Inter; src: url(file:///home/user/ladle-prototype/tools/video/fonts/Inter-SemiBold.ttf); font-weight: 600; }
+* { margin: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; background: #FBF7F0; color: #2B2420; font-family: Inter; }
+/* Cards keep the bottom band free for the subtitles. */
+.stage { position: absolute; inset: 0 0 200px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 36px; padding: 0 240px; }
+.icon svg { width: 140px; height: 140px; display: block; }
+h1 { font-family: Fraunces; font-weight: 600; font-size: 132px; line-height: 1; letter-spacing: -2px; }
+.sub { font-size: 44px; font-weight: 500; color: #6B5F57; }
+blockquote { font-family: Fraunces; font-weight: 600; font-size: 76px; line-height: 1.15; letter-spacing: -0.5px; }
+blockquote::before { content: "“"; color: #D9603B; }
+blockquote::after { content: "”"; color: #D9603B; }
+.pill { display: inline-block; font-size: 28px; font-weight: 500; color: #6B5F57; background: #F3ECE1; border-radius: 999px; padding: 12px 26px; }
+.line { font-family: Fraunces; font-weight: 600; font-size: 72px; line-height: 1.2; letter-spacing: -0.5px; }
+.url { font-size: 36px; font-weight: 600; color: #B4512E; }
+</style></head><body><div class="stage"><div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#D9603B"/>
+  <path d="M10 34h30a15 15 0 0 1-30 0z" fill="#FBF7F0"/>
+  <path d="M38 34 C42 25 45 17 47.5 11 C48.5 8.5 51.5 8.5 52 11" fill="none" stroke="#FBF7F0" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</div><h1>Ladle</h1><p class="sub">Calorie tracking for home cooks</p></div></body></html>
