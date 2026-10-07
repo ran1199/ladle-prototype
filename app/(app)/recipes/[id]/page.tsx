@@ -149,7 +149,9 @@ export default function RecipeCardPage() {
               unoptimized={recipe.photo.src.startsWith("data:")}
               width={1200}
               height={860}
-              className="h-auto w-full"
+              className={
+                recipe.photo.fromPlate ? "aspect-[4/3] w-full object-cover" : "h-auto w-full"
+              }
             />
           </button>
         ) : (

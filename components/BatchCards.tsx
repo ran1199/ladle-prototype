@@ -9,7 +9,7 @@ import { isSameDay, kcalNumber } from "@/lib/format";
 import { logKcal, recipeConfidence } from "@/lib/logic";
 import { actions, useLadle } from "@/lib/store";
 import type { Batch, Recipe } from "@/lib/types";
-import { DishIllustration } from "./DishIllustration";
+import { RecipeThumb } from "./RecipeThumb";
 import { LogButton } from "./LogButton";
 import { useToast } from "./Toast";
 import { Button, Card } from "./ui";
@@ -54,7 +54,7 @@ export function LeftoverNudge({ batch, recipe }: { batch: Batch; recipe: Recipe 
   const level = useRecipeLevel(recipe);
   return (
     <Card className="flex items-center gap-3">
-      <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
+      <RecipeThumb recipe={recipe} size={48} />
       <div className="min-w-0 flex-1">
         <p className="text-headline">{recipe.name}</p>
         <p className="text-body tabular text-ink-2">
@@ -79,7 +79,7 @@ export function StillHaveCard({ batch, recipe }: { batch: Batch; recipe: Recipe 
   return (
     <Card className="border-2 border-estimate">
       <div className="flex items-center gap-3">
-        <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
+        <RecipeThumb recipe={recipe} size={48} />
         <div className="min-w-0 flex-1">
           <p className="text-headline">Still have {recipe.name.toLowerCase()}?</p>
           <p className="text-body tabular text-ink-2">
@@ -126,11 +126,11 @@ export function BatchCard({ batch, recipe }: { batch: Batch; recipe: Recipe }) {
   return (
     <Card>
       <div className="flex items-center gap-3">
-        <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
+        <RecipeThumb recipe={recipe} size={48} />
         <div className="min-w-0 flex-1">
           <Link
             href={`/recipes/${recipe.id}`}
-            className="text-headline underline-offset-4 hover:underline"
+            className="tap-target text-headline underline-offset-4 hover:underline"
           >
             {recipe.name}
           </Link>

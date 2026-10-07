@@ -50,8 +50,13 @@ export type Recipe = {
   illustration: "bowl" | "plate" | "jar" | "pot";
   /** Where the recipe came from (a link, or a note like "Recipe card"). */
   source: string | null;
-  /** A photo of the recipe (e.g. the recipe card it was imported from). */
-  photo?: { src: string; alt: string } | null;
+  /**
+   * A photo of the recipe: the recipe card it was imported from, or a plate
+   * photo the user chose to keep (`fromPlate`, shown as the recipe's picture).
+   */
+  photo?: { src: string; alt: string; fromPlate?: boolean } | null;
+  /** The user said "Not now" to using a plate photo for this recipe: don't ask again. */
+  photoDeclined?: boolean;
   lastEatenAt: string | null;
   createdAt: string;
   /** When the recipe card was last opened (a hint for plate matching). */

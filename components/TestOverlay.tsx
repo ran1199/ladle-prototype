@@ -43,7 +43,7 @@ function Stopwatch() {
   }, [running]);
 
   const ms = elapsedMs(flags.timerStartedAt, flags.timerElapsedMs ?? 0, running ? now : undefined);
-  const btn = "flex size-9 items-center justify-center rounded-full bg-white/15 hover:bg-white/25";
+  const btn = "flex size-11 items-center justify-center rounded-full bg-white/15 hover:bg-white/25";
 
   return (
     <div className="flex items-center gap-1.5">
@@ -111,7 +111,7 @@ function TaskClock({ startedAt }: { startedAt: string }) {
 function SessionBar({ session }: { session: Session }) {
   const active = activeTask(session);
   const btn =
-    "flex h-9 min-w-9 items-center justify-center rounded-full bg-white/15 px-2 text-[13px] font-semibold hover:bg-white/25";
+    "flex h-11 min-w-11 items-center justify-center rounded-full bg-white/15 px-2 text-[13px] font-semibold hover:bg-white/25";
   if (active) {
     return (
       <>
@@ -198,7 +198,7 @@ export function TestOverlay({ aboveTabBar }: { aboveTabBar: boolean }) {
           flags.overlayTop ? "Move test tools to the bottom" : "Move test tools to the top"
         }
         onClick={() => setTestFlags({ overlayTop: !flags.overlayTop })}
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"
+        className="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/15 hover:bg-white/25"
       >
         <span aria-hidden="true">↕</span>
       </button>

@@ -6,8 +6,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { LeftoverNudge, StillHaveCard } from "@/components/BatchCards";
-import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
+import { CONFIDENCE_LABEL, ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
+import { RecipeThumb } from "@/components/RecipeThumb";
 import { LogDetailSheet } from "@/components/LogDetailSheet";
 import { TourCard } from "@/components/TourCard";
 import { UsualCard } from "@/components/UsualCard";
@@ -75,7 +76,7 @@ function MealRow({
   return (
     <li className="relative flex items-center gap-3 py-3">
       {recipe ? (
-        <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
+        <RecipeThumb recipe={recipe} size={48} />
       ) : (
         <DishIllustration kind="plate" seed={log.name} size={48} />
       )}
@@ -86,8 +87,8 @@ function MealRow({
           {log.batchId ? " · from batch" : ""}
           {log.adjustments?.length ? ` · ${log.adjustments.map((a) => a.label).join(", ")}` : ""}
         </p>
-        {/* Sits above the row's tap area so it opens its own explanation. */}
-        <ConfidenceIndicator level={log.confidence} recipe={recipe} className="relative z-10" />
+        {/* Plain text here: the whole row opens the meal, where the label explains itself. */}
+        <ConfidenceIndicator level={log.confidence} recipe={recipe} plain />
       </div>
       <p className="tabular shrink-0 text-right">
         <span className="text-headline block">{kcalNumber(log.kcal, log.confidence)}</span>
@@ -96,7 +97,7 @@ function MealRow({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`${log.name}, ${formatPortion(log.portion)}, ${kcalNumber(log.kcal, log.confidence)} kcal. Edit`}
+        aria-label={`${log.name}, ${formatPortion(log.portion)}, ${kcalNumber(log.kcal, log.confidence)} kcal, ${CONFIDENCE_LABEL[log.confidence]}. Edit`}
         className="absolute inset-0 rounded-[var(--radius-control)] hover:bg-surface-2/40"
       />
     </li>
@@ -126,7 +127,7 @@ function PendingPlateCard() {
             clearPlate();
             setPlate(null);
           }}
-          className="text-caption min-h-9 font-semibold text-ink-2"
+          className="text-caption min-h-11 px-2 font-semibold text-ink-2"
         >
           Discard
         </button>

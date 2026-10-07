@@ -176,7 +176,7 @@ export function ImportSheet({
             <button
               type="button"
               onClick={() => setUrl(DEMO_LINK)}
-              className="text-caption mt-2 min-h-9 rounded-full bg-surface-2 px-3 font-semibold text-ink-2"
+              className="text-caption mt-2 min-h-11 rounded-full bg-surface-2 px-4 font-semibold text-ink-2"
             >
               Use demo link
             </button>
@@ -215,7 +215,7 @@ export function ImportSheet({
                 setText(DEMO_CAPTION);
                 setNotice(null);
               }}
-              className="text-caption mt-1 min-h-9 rounded-full bg-surface-2 px-3 font-semibold text-ink-2"
+              className="text-caption mt-1 min-h-11 rounded-full bg-surface-2 px-4 font-semibold text-ink-2"
             >
               Use example
             </button>

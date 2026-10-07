@@ -18,7 +18,8 @@ export const DISCLAIMER = "This is a prototype for research, not medical or nutr
 export const PRIVACY =
   "Ladle runs in your browser and your data stays on this device. Recipe links are fetched by " +
   "Ladle’s server to read the ingredients, and barcode lookups go to Open Food Facts. Nothing is " +
-  "stored on a server.";
+  "stored on a server. Plate photos are deleted after logging, unless you choose to use one as " +
+  "a recipe photo.";
 
 /** What the "Prototype" pill explains. */
 export const PROTOTYPE_NOTE =
@@ -31,4 +32,31 @@ export const HOW_AI_WORKS: string[] = [
   "Recipe photos: text recognition runs on your device, then the same reader takes over. If it can’t read the photo well, you can fix the text.",
   "Plate photos: Ladle can’t see food. It suggests the recipe you most likely made, from what you cooked or opened recently and what you usually eat at this time. The photo only measures your share.",
   "Restaurant meals and snacks use typical values, so they’re always rough estimates.",
+];
+
+/**
+ * "Not in this prototype, on purpose" (Me → About and the README). The
+ * usability tests focus on the core loop: importing, logging and correcting.
+ */
+export const NOT_IN_PROTOTYPE: { what: string; why: string }[] = [
+  {
+    what: "Onboarding",
+    why: "Tests start straight on the core loop as Maya. Your daily target is set in Me.",
+  },
+  {
+    what: "Real AI",
+    why: "It’s simulated by a script, so every participant gets the same answers while importing, logging and correcting.",
+  },
+  {
+    what: "Weekly weight trends",
+    why: "The tests are about logging home-cooked meals, not progress over weeks.",
+  },
+  {
+    what: "Apple Health",
+    why: "Syncing wouldn’t change how importing, logging and correcting feel to test.",
+  },
+  {
+    what: "Accounts",
+    why: "Your data stays in this browser, so a test session needs no sign-up.",
+  },
 ];

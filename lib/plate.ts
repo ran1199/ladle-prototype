@@ -2,7 +2,8 @@
 
 // The plate photo being logged (F5, F8). It is saved in the browser *before*
 // analysis starts, so nothing is lost if the network fails or the app closes.
-// It is deleted once the meal is logged: Ladle doesn't keep plate photos.
+// It is deleted once the meal is logged: Ladle doesn't keep plate photos, unless
+// the user chooses to use one as the recipe's photo ("Use this photo for the recipe?").
 
 import type { PlateAnalysis } from "./ai/schemas";
 import { DEMO_PLATE, OLD_DEMO_PLATE_SRC } from "./ai/scripted";

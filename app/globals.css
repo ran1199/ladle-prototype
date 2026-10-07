@@ -201,6 +201,21 @@ body {
   }
 }
 
+/* A tap area of at least 44 × 44 pt around a visually smaller control
+   (a label, a pill, a link in a title), without changing how it looks. */
+.tap-target {
+  position: relative;
+}
+.tap-target::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+}
+
 /* Portion helper slider: a thick track that fills in terracotta up to the
    thumb (--fill), and a big round handle that's easy to drag. */
 .portion-slider {

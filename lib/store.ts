@@ -283,6 +283,22 @@ export const actions = {
     state = { ...current, prefs };
     emit();
   },
+  /** "Use this photo for the recipe?" → Use photo. */
+  setRecipePhoto(recipeId: string, photo: { src: string; alt: string }) {
+    setData((data) => ({
+      ...data,
+      recipes: data.recipes.map((r) =>
+        r.id === recipeId ? { ...r, photo: { ...photo, fromPlate: true } } : r,
+      ),
+    }));
+  },
+  /** "Use this photo for the recipe?" → Not now (Ladle won't ask again for this recipe). */
+  declineRecipePhoto(recipeId: string) {
+    setData((data) => ({
+      ...data,
+      recipes: data.recipes.map((r) => (r.id === recipeId ? { ...r, photoDeclined: true } : r)),
+    }));
+  },
   /** Delete a log (also used for Undo). */
   deleteLog(logId: string) {
     setData((data) => removeLog(data, logId));

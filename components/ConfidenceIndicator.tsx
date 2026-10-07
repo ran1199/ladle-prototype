@@ -87,12 +87,19 @@ export function ConfidenceIndicator({
   recipe,
   pending = false,
   className = "",
+  plain = false,
 }: {
   level: Confidence;
   recipe?: Recipe | null;
   /** The recipe has a repeated correction waiting for the user's decision. */
   pending?: boolean;
   className?: string;
+  /**
+   * Just the dots and label, not a button: for places that are already one big
+   * tap target (a meal row), so two tap areas never overlap. The explainer is
+   * one tap away in the meal's sheet.
+   */
+  plain?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -116,13 +123,24 @@ export function ConfidenceIndicator({
     </ul>
   );
 
+  if (plain) {
+    return (
+      <span
+        className={`text-caption inline-flex min-h-8 items-center gap-1.5 font-medium ${l.text} ${className}`}
+      >
+        <Dots level={level} />
+        {l.label}
+      </span>
+    );
+  }
+
   const button = (
     <button
       type="button"
       onClick={() => setOpen(!open)}
       aria-label={`${l.label}. What does this mean?`}
       {...(inSheet ? { "aria-expanded": open, "aria-controls": panelId } : {})}
-      className={`text-caption -mx-1 inline-flex min-h-8 items-center gap-1.5 rounded-lg px-1 font-medium ${l.text} hover:bg-surface-2 ${className}`}
+      className={`tap-target text-caption -mx-1 inline-flex min-h-8 items-center gap-1.5 rounded-lg px-1 font-medium ${l.text} hover:bg-surface-2 ${className}`}
     >
       <Dots level={level} />
       {l.label}
@@ -161,3 +179,11 @@ export function ConfidenceIndicator({
     </>
   );
 }
+
+/** The label for each level, e.g. for a row's accessible name. */
+export const CONFIDENCE_LABEL: Record<Confidence, string> = {
+  rough: LEVELS.rough.label,
+  good: LEVELS.good.label,
+  confirmed: LEVELS.confirmed.label,
+  label: LEVELS.label.label,
+};
