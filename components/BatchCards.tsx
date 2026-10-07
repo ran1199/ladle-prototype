@@ -53,22 +53,26 @@ export function LeftoverNudge({ batch, recipe }: { batch: Batch; recipe: Recipe 
   const logFromBatch = useLogFromBatch();
   const level = useRecipeLevel(recipe);
   return (
-    <Card className="flex items-center gap-3">
-      <RecipeThumb recipe={recipe} size={48} />
-      <div className="min-w-0 flex-1">
-        <p className="text-headline">{recipe.name}</p>
-        <p className="text-body tabular text-ink-2">
-          {servingsText(batch.servingsLeft)} left. Log one?
-        </p>
+    <Card>
+      <div className="flex items-center gap-3">
+        <RecipeThumb recipe={recipe} size={48} />
+        <div className="min-w-0 flex-1">
+          <p className="text-headline">{recipe.name}</p>
+          <p className="text-body tabular text-ink-2">
+            {servingsText(batch.servingsLeft)} left. Log one?
+          </p>
+        </div>
       </div>
-      <LogButton
-        className="shrink-0"
-        onClick={() => logFromBatch(batch, recipe, "leftovers")}
-        name={recipe.name}
-        portion={1}
-        kcal={logKcal(recipe, 1, batch)}
-        level={level}
-      />
+      {/* Its own row (like the Recipes cards), so a long name never gets squeezed. */}
+      <div className="mt-3 flex justify-end">
+        <LogButton
+          onClick={() => logFromBatch(batch, recipe, "leftovers")}
+          name={recipe.name}
+          portion={1}
+          kcal={logKcal(recipe, 1, batch)}
+          level={level}
+        />
+      </div>
     </Card>
   );
 }
