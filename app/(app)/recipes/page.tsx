@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
-import { DishIllustration } from "@/components/DishIllustration";
+import { RecipeThumb } from "@/components/RecipeThumb";
 import { MoreIcon, PlusIcon, SearchIcon } from "@/components/icons";
 import { ImportSheet } from "@/components/ImportSheet";
 import { PortionPicker } from "@/components/PortionPicker";
@@ -38,12 +38,12 @@ function RecipeCard({
   return (
     <Card className="p-4">
       <div className="flex gap-3">
-        <DishIllustration kind={recipe.illustration} seed={recipe.id} size={64} />
+        <RecipeThumb recipe={recipe} size={64} />
         <div className="min-w-0 flex-1">
           <h2 className="text-headline">
             <Link
               href={`/recipes/${recipe.id}`}
-              className="underline-offset-4 hover:underline focus-visible:underline"
+              className="tap-target underline-offset-4 hover:underline focus-visible:underline"
             >
               {recipe.name}
             </Link>

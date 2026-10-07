@@ -15,7 +15,7 @@ import { useTestFlags } from "@/lib/testControls";
 import type { AppData } from "@/lib/types";
 import { usualSuggestions } from "@/lib/usual";
 import { ConfidenceIndicator } from "./ConfidenceIndicator";
-import { DishIllustration } from "./DishIllustration";
+import { RecipeThumb } from "./RecipeThumb";
 import { BasketIcon, ChevronIcon } from "./icons";
 import { LogButton } from "./LogButton";
 import { useToast } from "./Toast";
@@ -119,7 +119,7 @@ export function UsualCard({ data }: { data: AppData }) {
             {day} {result.slot}
           </p>
           <div className="mt-2 flex items-center gap-3">
-            <DishIllustration kind={recipe.illustration} seed={recipe.id} size={56} />
+            <RecipeThumb recipe={recipe} size={56} />
             <div className="min-w-0 flex-1">
               <h2 id="usual-heading" className="text-headline">
                 {suggestion.usual ? `Your usual ${name}?` : `${recipe.name}?`}

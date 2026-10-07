@@ -19,7 +19,7 @@ export function PrototypeBadge() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="text-caption inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-2 px-3 font-medium text-ink-2 hover:brightness-[0.97]"
+        className="tap-target text-caption inline-flex h-7 items-center gap-1.5 rounded-full bg-surface-2 px-3 font-medium text-ink-2 hover:brightness-[0.97]"
         aria-label="Prototype: about Ladle’s simulated AI"
       >
         <span aria-hidden="true" className="size-2 rounded-full bg-rough" />

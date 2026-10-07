@@ -44,6 +44,7 @@ import {
   photoBlob,
   readPhotoFile,
   savePlate,
+  shrinkImage,
   type PendingPlate,
 } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
@@ -421,6 +422,9 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
   );
   const [fixesOpen, setFixesOpen] = useState(false);
   const loggedId = useRef<string | null>(null);
+  /** Logged; now asking once "Use this photo for the recipe?" (C1). */
+  const [askPhoto, setAskPhoto] = useState<{ message: string; logId: string } | null>(null);
+  const [savingPhoto, setSavingPhoto] = useState(false);
   // 0.5–0.7: "Might be X?" with the next two as chips.
   const unsure = !!result && !result.isNewFood && result.matchConfidence < 0.7;
   const alternatives = (result?.alternatives ?? [])
@@ -449,10 +453,36 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
     };
   }
 
+  /**
+   * After logging a recipe from the photo: if the recipe has no photo yet (and
+   * the user hasn't said "Not now" before), ask once whether to keep this one.
+   */
+  function logged(message: string, logId: string) {
+    const current = recipes.find((r) => r.id === recipe?.id);
+    if (!current || current.photo || current.photoDeclined) return finish(message, logId);
+    // The meal is logged, so the plate photo no longer waits in storage; it's
+    // only kept if the user chooses "Use photo".
+    clearPlate();
+    setAskPhoto({ message, logId });
+  }
+
+  async function usePhoto() {
+    if (!recipe || !askPhoto) return;
+    setSavingPhoto(true);
+    const photo = plate.photo.isSample
+      ? { src: DEMO_PLATE.src, alt: DEMO_PLATE.alt }
+      : {
+          src: await shrinkImage(plate.photo.src, 800).catch(() => plate.photo.src),
+          alt: `Your photo of ${recipe.name}`,
+        };
+    actions.setRecipePhoto(recipe.id, photo);
+    finish(askPhoto.message, askPhoto.logId);
+  }
+
   function logIt() {
     if (!recipe) return;
     const log = actions.logRecipe(recipe.id, portion, logOpts());
-    if (log) finish(`Nice, that’s logged · ${kcalNumber(log.kcal, log.confidence)} kcal`, log.id);
+    if (log) logged(`Nice, that’s logged · ${kcalNumber(log.kcal, log.confidence)} kcal`, log.id);
   }
 
   function logRough(food: { name: string; kcal: number }) {
@@ -484,6 +514,46 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
     setPicked(true);
     setPortionState(r.usualPortion);
     setMode("main");
+  }
+
+  if (askPhoto && recipe) {
+    return (
+      <Panel>
+        <p role="status" className="text-body flex items-center gap-2 text-ink-2">
+          <span aria-hidden="true" className="font-semibold text-confirmed">
+            ✓
+          </span>
+          {askPhoto.message}
+        </p>
+        <div className="mt-4 flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- the plate photo, shown small */}
+          <img
+            src={plate.photo.src}
+            alt=""
+            className="size-16 shrink-0 rounded-[16px] object-cover"
+          />
+          <h1 className="text-title">Use this photo for the recipe?</h1>
+        </div>
+        <p className="text-body mt-2 text-ink-2">
+          It shows on {recipe.name} in your recipes and on Today. Otherwise the photo is deleted
+          now.
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <Button onClick={usePhoto} disabled={savingPhoto}>
+            Use photo
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              actions.declineRecipePhoto(recipe.id);
+              finish(askPhoto.message, askPhoto.logId);
+            }}
+          >
+            Not now
+          </Button>
+        </div>
+      </Panel>
+    );
   }
 
   if (mode === "pick") {
@@ -601,28 +671,29 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
               key={r.id}
               type="button"
               onClick={() => choose(r)}
-              className="text-caption min-h-10 rounded-full bg-surface-2 px-3 font-semibold hover:brightness-[0.97]"
+              className="text-caption min-h-11 rounded-full bg-surface-2 px-3 font-semibold hover:brightness-[0.97]"
             >
               {r.name}
             </button>
           ))}
         </div>
       )}
-      <div className="mt-1 flex flex-wrap gap-x-4">
-        <button
-          type="button"
+      {/* Two secondary buttons (44 pt tall), side by side; stacked on very narrow screens. */}
+      <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+        <Button
+          variant="secondary"
+          className="min-h-11 px-2 text-[14px] leading-tight whitespace-nowrap"
           onClick={() => setMode("pick")}
-          className="text-caption min-h-10 font-semibold text-accent-strong"
         >
           Not this? Pick another
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="secondary"
+          className="min-h-11 px-2 text-[14px] leading-tight whitespace-nowrap"
           onClick={() => setMode("new")}
-          className="text-caption min-h-10 font-semibold text-accent-strong"
         >
           It&rsquo;s something new
-        </button>
+        </Button>
       </div>
 
       <div className="mt-4">
@@ -694,7 +765,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
         onResolve={(suggestion, accept) => actions.resolveSuggestion(recipe.id, suggestion, accept)}
         onDone={(message) => {
           setFixesOpen(false);
-          if (loggedId.current) finish(`Logged. ${message}`, loggedId.current);
+          if (loggedId.current) logged(`Logged. ${message}`, loggedId.current);
         }}
       />
     </Panel>

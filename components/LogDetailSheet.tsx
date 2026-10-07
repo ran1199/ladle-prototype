@@ -13,7 +13,7 @@ import { emitEvent } from "@/lib/events";
 import { actions } from "@/lib/store";
 import type { FixKind, LogEntry, Recipe } from "@/lib/types";
 import { ConfidenceIndicator } from "./ConfidenceIndicator";
-import { DishIllustration } from "./DishIllustration";
+import { RecipeThumb } from "./RecipeThumb";
 import { PortionPicker } from "./PortionPicker";
 import { fixStepTitle, QuickFixSteps, type FixStep } from "./QuickFixSheet";
 import { Sheet } from "./Sheet";
@@ -120,7 +120,7 @@ export function LogDetailSheet({
     <Sheet open={log !== null} onClose={onClose} title={current.name}>
       <div className="step-in">
         <div className="-mt-1 mb-5 flex items-center gap-3">
-          {recipe && <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />}
+          {recipe && <RecipeThumb recipe={recipe} size={48} />}
           <div>
             <p className="text-body tabular">
               {formatPortion(portion)} · {kcalNumber(kcal, current.confidence)} kcal

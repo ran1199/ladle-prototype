@@ -51,13 +51,17 @@ ever open at a time; deeper steps happen inside it.
 
 ## Screenshots
 
-| Today | Import a recipe | Plate photo | Quick fix |
+| Today | Import a recipe | Plate photo | Portion helper (own photo) |
 | --- | --- | --- | --- |
-| ![Today: 870 kcal left, today's meals and a leftovers nudge](docs/screenshots/today.png) | ![Review screen with the question "How much oil did you use for frying?"](docs/screenshots/import-review.png) | ![Plate photo result: Looks like garlic chicken stir-fry, about 1 serving](docs/screenshots/plate-result.jpg) | ![Today was different? More oil, with Just this time or Always](docs/screenshots/quick-fix.png) |
+| ![Today: the Try Ladle in 60 seconds card with three steps, 870 kcal left, and Thursday dinner: Your usual chicken adobo? with Log · 420 and Not today](docs/screenshots/today.png) | ![Review recipe for Air-fryer garlic chicken with mushrooms, asking How much olive oil did you brush on? with 1, 2 or 3 tbsp or Not sure](docs/screenshots/import-review.png) | ![Sample plate photo result: Looks like Air-fryer garlic chicken with mushrooms, a pan showing a quarter taken, 1 serving, about 530 kcal, Good estimate](docs/screenshots/plate-result.jpg) | ![Own plate photo: Might be Air-fryer garlic chicken with mushrooms? The pan slider is at 1½ servings, about 800 kcal, with Your usual portion is 1 serving](docs/screenshots/portion-helper.jpg) |
 
-| Recipe card | Pantry | Add other food | On a laptop |
+| Quick fix (one sheet) | Recipe card with a photo | Pantry | Add other food |
 | --- | --- | --- | --- |
-| ![Recipe card with totals, servings and ingredients](docs/screenshots/recipe-card.png) | ![Pantry with batches counting down](docs/screenshots/pantry.png) | ![Add other food: barcode, search or restaurant dish](docs/screenshots/add-food.png) | ![The app in a phone frame beside a short about panel](docs/screenshots/desktop.png) |
+| ![The meal's sheet on the More oil step: +1 tbsp in the pan · +120 for the batch, On your plate: +30 kcal, Just this time or Always](docs/screenshots/quick-fix.png) | ![Recipe card for Air-fryer garlic chicken with the plate photo chosen as its picture, 2,133 kcal total, 4 servings, 533 per serving, Log · about 530](docs/screenshots/recipe-card.jpg) | ![Pantry: turkey chili cooked yesterday, 4 of 6 servings left, Log · 380](docs/screenshots/pantry.png) | ![Add other food: scan a barcode, search, or pick a restaurant dish](docs/screenshots/add-food.png) |
+
+**On a laptop:** the app sits in a phone frame beside a short about panel.
+
+![The app in a phone frame on Today, beside the Ladle about panel with Reset demo and Code on GitHub](docs/screenshots/desktop.png)
 
 ## Usability test tasks
 
@@ -127,9 +131,28 @@ are no access codes or API keys to manage.
 
 Ladle runs in your browser and your data stays on this device. Recipe links are
 fetched by Ladle's server to read the ingredients, and barcode lookups go to Open
-Food Facts. Nothing is stored on a server. Plate photos are deleted once the meal
-is logged. **Me → Export my data** saves everything as a file, and **Delete all
+Food Facts. Nothing is stored on a server. Plate photos are deleted after
+logging, unless you choose to use one as a recipe photo: after you log a recipe
+that has no picture, Ladle asks once, "Use this photo for the recipe?" (Use photo
+or Not now). **Me → Export my data** saves everything as a file, and **Delete all
 data** removes it.
+
+## Not in this prototype, on purpose
+
+The usability tests focus on the core loop: importing, logging and correcting.
+So some things a real app would have are left out:
+
+- **Onboarding:** tests start straight on the core loop as Maya. Your daily target
+  is set in Me.
+- **Real AI:** it's simulated by a script, so every participant gets the same
+  answers while importing, logging and correcting.
+- **Weekly weight trends:** the tests are about logging home-cooked meals, not
+  progress over weeks.
+- **Apple Health:** syncing wouldn't change how importing, logging and correcting
+  feel to test.
+- **Accounts:** your data stays in this browser, so a test session needs no sign-up.
+
+The same list is in the app, under **Me → About this prototype**.
 
 ## Resetting the demo
 
@@ -168,6 +191,8 @@ Hidden controls open:
    estimate unchanged, T5 saved. Add a note per task, then **Save as CSV**.
 6. Past sessions stay in Test controls: open one, **Save all as one CSV**, or
    **Delete session**.
+7. Before the next participant, start a new session (it resets to Maya's
+   starting data by itself), or use **Reset to test start**.
 
 What's recorded for each task: start and end time, duration, taps inside the app,
 edits (changes to what Ladle filled in), wrong turns (Back, Cancel, closing a sheet,
@@ -216,8 +241,11 @@ repository:
   frame beside an info panel). Light and dark themes follow the device setting.
 - Built to WCAG 2.2 AA: readable contrast, labels for screen readers, visible
   keyboard focus, and reduced motion when the device asks for it.
-- Lighthouse on mobile (local build): Performance 91–96, Accessibility 100,
-  Best Practices 100.
+- Every button, link and icon button has a tap area of at least 44 × 44 pt (small
+  labels and links get an invisible larger tap area).
+- Lighthouse on mobile (local production build, after the critique fixes):
+  Accessibility 100 and Best Practices 100 on every screen; Performance 88–94
+  (Today 88–92, Recipes 88, Camera 93, Pantry 94, Add other food 94, Me 93).
 - Security headers include a Content Security Policy. The two server routes
   (recipe pages and barcodes) accept only checked input and never reach private
   network addresses.

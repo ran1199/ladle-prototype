@@ -1,7 +1,7 @@
 // The "About this prototype" content: shown in the desktop side panel and,
 // on phones, in Me → About this prototype.
 
-import { DISCLAIMER, PROTOTYPE_NOTE, REPO_URL, SUMMARY } from "@/lib/content";
+import { DISCLAIMER, NOT_IN_PROTOTYPE, PROTOTYPE_NOTE, REPO_URL, SUMMARY } from "@/lib/content";
 import { ExternalIcon } from "./icons";
 
 export function AboutLinks({ caseStudyUrl }: { caseStudyUrl: string }) {
@@ -22,6 +22,28 @@ export function AboutLinks({ caseStudyUrl }: { caseStudyUrl: string }) {
         </a>
       </li>
     </ul>
+  );
+}
+
+/** "Not in this prototype, on purpose": what's left out, and why. */
+export function NotInPrototype() {
+  return (
+    <section aria-labelledby="not-in-prototype" className="mt-6">
+      <h3 id="not-in-prototype" className="text-headline">
+        Not in this prototype, on purpose
+      </h3>
+      <p className="text-caption mt-1 text-ink-2">
+        The usability tests focus on the core loop: importing, logging and correcting.
+      </p>
+      <ul className="mt-3 space-y-2">
+        {NOT_IN_PROTOTYPE.map((item) => (
+          <li key={item.what} className="text-body">
+            <span className="font-semibold">{item.what}:</span>{" "}
+            <span className="text-ink-2">{item.why}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
