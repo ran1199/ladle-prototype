@@ -236,6 +236,7 @@ const VIA_TEXT: Record<LogVia, string> = {
   "portion-picker": "Log a portion (chips)",
   leftovers: "leftovers nudge",
   pantry: "Pantry",
+  suggestion: "the Your usual card",
   food: "other food",
   other: "other",
 };
@@ -283,7 +284,7 @@ export function applyEvent(t: TaskRecord, event: LadleEvent): TaskRecord {
       }
       if (t.task === "T4" && event.recipeId === "chicken-adobo") {
         const accepted =
-          event.acceptedEstimate ?? ["one-tap", "leftovers", "pantry"].includes(event.via);
+          event.acceptedEstimate ?? ["one-tap", "leftovers", "pantry", "suggestion"].includes(event.via);
         return done(`Logged via ${VIA_TEXT[event.via]}, portion ${event.portion}`, accepted);
       }
       return t;

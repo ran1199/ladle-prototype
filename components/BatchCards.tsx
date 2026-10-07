@@ -5,11 +5,12 @@
 // - an older batch (over 4 days): "Still have turkey chili?" Yes / Clear.
 
 import Link from "next/link";
-import { formatNumber, isSameDay } from "@/lib/format";
-import { logKcal } from "@/lib/logic";
-import { actions } from "@/lib/store";
+import { isSameDay, kcalNumber } from "@/lib/format";
+import { logKcal, recipeConfidence } from "@/lib/logic";
+import { actions, useLadle } from "@/lib/store";
 import type { Batch, Recipe } from "@/lib/types";
 import { DishIllustration } from "./DishIllustration";
+import { LogButton } from "./LogButton";
 import { useToast } from "./Toast";
 import { Button, Card } from "./ui";
 
@@ -28,13 +29,19 @@ function servingsText(n: number) {
   return `${n} ${n === 1 ? "serving" : "servings"}`;
 }
 
+/** The recipe's confidence level (estimates show rounded numbers). */
+function useRecipeLevel(recipe: Recipe) {
+  const state = useLadle();
+  return recipeConfidence(recipe, state?.data.fixes ?? []);
+}
+
 export function useLogFromBatch() {
   const toast = useToast();
   return (batch: Batch, recipe: Recipe, via: "leftovers" | "pantry") => {
     const log = actions.logRecipe(recipe.id, 1, { batchId: batch.id, via });
     if (!log) return;
     toast({
-      message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal`,
+      message: `${recipe.name} logged · ${kcalNumber(log.kcal, log.confidence)} kcal`,
       actionLabel: "Undo",
       onAction: () => actions.deleteLog(log.id),
     });
@@ -44,6 +51,7 @@ export function useLogFromBatch() {
 /** Today's nudge for a fresh batch. */
 export function LeftoverNudge({ batch, recipe }: { batch: Batch; recipe: Recipe }) {
   const logFromBatch = useLogFromBatch();
+  const level = useRecipeLevel(recipe);
   return (
     <Card className="flex items-center gap-3">
       <DishIllustration kind={recipe.illustration} seed={recipe.id} size={48} />
@@ -53,13 +61,14 @@ export function LeftoverNudge({ batch, recipe }: { batch: Batch; recipe: Recipe 
           {servingsText(batch.servingsLeft)} left. Log one?
         </p>
       </div>
-      <Button
-        className="shrink-0 px-4"
+      <LogButton
+        className="shrink-0"
         onClick={() => logFromBatch(batch, recipe, "leftovers")}
-        aria-label={`Log one serving of ${recipe.name}, ${formatNumber(logKcal(recipe, 1, batch))} kcal`}
-      >
-        Log
-      </Button>
+        name={recipe.name}
+        portion={1}
+        kcal={logKcal(recipe, 1, batch)}
+        level={level}
+      />
     </Card>
   );
 }
@@ -110,6 +119,7 @@ export function StillHaveCard({ batch, recipe }: { batch: Batch; recipe: Recipe 
 /** Pantry's card for a fresh batch: countdown, Log a serving, and fixing the count. */
 export function BatchCard({ batch, recipe }: { batch: Batch; recipe: Recipe }) {
   const logFromBatch = useLogFromBatch();
+  const level = useRecipeLevel(recipe);
   const share = batch.servingsLeft / batch.servingsMade;
   const step =
     "text-headline flex size-11 items-center justify-center rounded-[10px] bg-surface-2 disabled:opacity-40";
@@ -144,9 +154,14 @@ export function BatchCard({ batch, recipe }: { batch: Batch; recipe: Recipe }) {
         />
       </div>
       <div className="mt-4 flex items-center gap-2">
-        <Button className="flex-1" onClick={() => logFromBatch(batch, recipe, "pantry")}>
-          Log one · {formatNumber(logKcal(recipe, 1, batch))} kcal
-        </Button>
+        <LogButton
+          className="flex-1"
+          onClick={() => logFromBatch(batch, recipe, "pantry")}
+          name={recipe.name}
+          portion={1}
+          kcal={logKcal(recipe, 1, batch)}
+          level={level}
+        />
         <div className="flex items-center gap-1" role="group" aria-label="Fix the count">
           <button
             type="button"

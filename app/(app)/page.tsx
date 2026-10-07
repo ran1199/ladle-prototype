@@ -1,18 +1,18 @@
 "use client";
 
-// Today tab (F2): daily budget, today's meals grouped by time of day,
-// quick actions and the leftovers nudge.
+// Today tab (F2): the 60-second tour, daily budget, "Your usual" (the likely
+// meal for now), the leftovers nudge, and today's meals grouped by time of day.
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { LeftoverNudge, StillHaveCard } from "@/components/BatchCards";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
-import { BasketIcon, CameraIcon, RecipesIcon } from "@/components/icons";
 import { LogDetailSheet } from "@/components/LogDetailSheet";
 import { TourCard } from "@/components/TourCard";
+import { UsualCard } from "@/components/UsualCard";
 import { Card, ScreenHeader } from "@/components/ui";
-import { formatLongDate, formatNumber, formatTime, isSameDay } from "@/lib/format";
+import { formatLongDate, formatNumber, formatTime, isSameDay, kcalNumber } from "@/lib/format";
 import {
   formatPortion,
   isFreshBatch,
@@ -63,36 +63,6 @@ function BudgetCard({ eaten, target }: { eaten: number; target: number }) {
   );
 }
 
-function QuickAction({
-  icon,
-  label,
-  href,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  href?: string;
-  onClick?: () => void;
-}) {
-  const cls =
-    "text-caption flex min-h-[76px] flex-1 flex-col items-center justify-center gap-1.5 rounded-[var(--radius-card)] bg-surface px-2 text-center font-semibold text-ink hover:brightness-[0.98]";
-  const inner = (
-    <>
-      <span className="text-accent-strong">{icon}</span>
-      {label}
-    </>
-  );
-  return href ? (
-    <Link href={href} className={cls}>
-      {inner}
-    </Link>
-  ) : (
-    <button type="button" onClick={onClick} className={cls}>
-      {inner}
-    </button>
-  );
-}
-
 function MealRow({
   log,
   recipe,
@@ -120,13 +90,13 @@ function MealRow({
         <ConfidenceIndicator level={log.confidence} recipe={recipe} className="relative z-10" />
       </div>
       <p className="tabular shrink-0 text-right">
-        <span className="text-headline block">{formatNumber(log.kcal)}</span>
+        <span className="text-headline block">{kcalNumber(log.kcal, log.confidence)}</span>
         <span className="text-caption text-ink-2">kcal</span>
       </p>
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`${log.name}, ${formatPortion(log.portion)}, ${formatNumber(log.kcal)} kcal. Edit`}
+        aria-label={`${log.name}, ${formatPortion(log.portion)}, ${kcalNumber(log.kcal, log.confidence)} kcal. Edit`}
         className="absolute inset-0 rounded-[var(--radius-control)] hover:bg-surface-2/40"
       />
     </li>
@@ -214,11 +184,7 @@ export default function TodayPage() {
 
         <PendingPlateCard />
 
-        <nav aria-label="Quick actions" className="flex gap-2">
-          <QuickAction icon={<CameraIcon />} label="Snap a plate" href="/camera" />
-          <QuickAction icon={<RecipesIcon />} label="Log a recipe" href="/recipes" />
-          <QuickAction icon={<BasketIcon />} label="Add other food" href="/add-food" />
-        </nav>
+        <UsualCard data={state.data} />
 
         {staleBatches.map((b) => {
           const recipe = recipeById(b.recipeId);

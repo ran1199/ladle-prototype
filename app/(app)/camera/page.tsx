@@ -2,7 +2,8 @@
 
 // Plate camera and photo log (F5, F8; task T2).
 // Capture → (photo + draft saved locally) → "Looking at your plate…" → result:
-// "Looks like Air-fryer garlic chicken with mushrooms", portion chips, calories, confidence, Log it.
+// "Looks like Air-fryer garlic chicken with mushrooms", the portion helper (pan +
+// slider) with portion chips, calories, confidence, Log it.
 // Ingredients always come from the recipe; the photo only measures the share.
 
 import Image from "next/image";
@@ -24,7 +25,7 @@ import { DEMO_PLATE, DEMO_RECIPE_NAME } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
 import { startDraft } from "@/lib/draft";
 import { emitEvent } from "@/lib/events";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, isEstimate, kcalNumber, shownKcal } from "@/lib/format";
 import {
   activeBatch,
   exactKcalPerServing,
@@ -402,7 +403,8 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
   const router = useRouter();
   const toast = useToast();
   const result = plate.result;
-  // The user's own photo: the portion helper (pan + slider) sets the share.
+  // Every result with a recipe shows the portion helper (pan + slider). It starts
+  // at Ladle's estimate for the sample photo, and at your usual portion otherwise.
   const ownPhoto = !plate.photo.isSample;
   const suggested = recipes.find((r) => r.id === result?.matchRecipeId) ?? null;
   const [recipe, setRecipe] = useState<Recipe | null>(suggested);
@@ -450,12 +452,12 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
   function logIt() {
     if (!recipe) return;
     const log = actions.logRecipe(recipe.id, portion, logOpts());
-    if (log) finish(`Nice, that’s logged · ${formatNumber(log.kcal)} kcal`, log.id);
+    if (log) finish(`Nice, that’s logged · ${kcalNumber(log.kcal, log.confidence)} kcal`, log.id);
   }
 
   function logRough(food: { name: string; kcal: number }) {
     const log = actions.logFood({ name: food.name, kcal: food.kcal, confidence: "rough" });
-    finish(`Logged as a rough estimate · ${formatNumber(log.kcal)} kcal`, log.id);
+    finish(`Logged as a rough estimate · ${kcalNumber(log.kcal, "rough")} kcal`, log.id);
   }
 
   function logOther(food: FoodResult, servings: number, confidence: Confidence) {
@@ -466,7 +468,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
       portion: servings,
     });
     finish(
-      `${confidence === "rough" ? "Logged as a rough estimate" : `${food.name} logged`} · ${formatNumber(log.kcal)} kcal`,
+      `${confidence === "rough" ? "Logged as a rough estimate" : `${food.name} logged`} · ${kcalNumber(log.kcal, confidence)} kcal`,
       log.id,
     );
   }
@@ -538,7 +540,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
               variant={result.suggestImport ? "secondary" : "primary"}
               onClick={() => logRough(roughGuess)}
             >
-              Log as a rough estimate · {formatNumber(roughGuess.kcal)} kcal
+              Log as a rough estimate · {kcalNumber(roughGuess.kcal, "rough")} kcal
             </Button>
             {result.suggestImport ? (
               <Button className="order-first" onClick={importDemoRecipe}>
@@ -576,6 +578,7 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
     ? recipeTotalKcal(recipe) / batch.servingsMade
     : exactKcalPerServing(recipe);
   const kcal = logKcal(recipe, portion, batch);
+  const level = recipeConfidence(recipe, fixes);
   return (
     <Panel>
       <div className="flex items-center gap-3">
@@ -622,37 +625,46 @@ function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
         </button>
       </div>
 
-      {ownPhoto ? (
-        <div className="mt-4">
-          <PortionHelper
-            photo={plate.photo}
-            value={portion}
-            onChange={setPortion}
-            servings={batch ? batch.servingsMade : recipe.servings}
-            servingsLeft={batch ? batch.servingsLeft : undefined}
-            usualPortion={recipe.usualPortion}
-            kcalFor={(p) => logKcal(recipe, p, batch)}
-          />
-        </div>
-      ) : (
-        <>
-          <p className="text-headline mt-3">
-            {picked || !result
-              ? "How much did you have?"
-              : `${unsure ? "About" : "Looks like about"} ${formatPortion(result.portionServings)}`}
-          </p>
-          {!picked && result && <p className="text-caption text-ink-2">{result.portionReason}</p>}
-        </>
-      )}
+      <div className="mt-4">
+        <PortionHelper
+          photo={plate.photo}
+          value={portion}
+          onChange={setPortion}
+          servings={batch ? batch.servingsMade : recipe.servings}
+          servingsLeft={batch ? batch.servingsLeft : undefined}
+          start={
+            !ownPhoto && !picked && result
+              ? {
+                  portion: result.portionServings,
+                  // "One chicken leg with vegetables, about a quarter…" → the first part (the pan shows the share).
+                  label: `Ladle’s estimate: ${result.portionReason.split(",")[0].replace(/^./, (c) => c.toLowerCase())}`,
+                  differs: `Ladle’s estimate is ${formatPortion(result.portionServings)}`,
+                }
+              : {
+                  portion: recipe.usualPortion,
+                  label: "Your usual portion",
+                  differs: `Your usual portion is ${formatPortion(recipe.usualPortion)}`,
+                }
+          }
+          kcalFor={(p) => logKcal(recipe, p, batch)}
+          level={level}
+        />
+      </div>
       <div className="mt-2">
-        <PortionPicker value={portion} onChange={setPortion} kcalPerServing={perServing} />
+        <PortionPicker
+          value={portion}
+          onChange={setPortion}
+          kcalPerServing={perServing}
+          level={level}
+        />
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-3">
         <p className="font-display tabular text-[34px] leading-10 font-semibold">
-          {formatNumber(kcal)} <span className="text-title">kcal</span>
+          {isEstimate(level) && <span className="text-title">about </span>}
+          {formatNumber(shownKcal(kcal, level))} <span className="text-title">kcal</span>
         </p>
-        <ConfidenceIndicator level={recipeConfidence(recipe, fixes)} recipe={recipe} />
+        <ConfidenceIndicator level={level} recipe={recipe} />
       </div>
 
       <Button className="mt-4 w-full" onClick={logIt}>

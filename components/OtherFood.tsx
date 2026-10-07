@@ -9,7 +9,7 @@
 import { useEffect, useId, useState } from "react";
 import { loadAI } from "@/lib/ai/lazy";
 import { AIError, type FoodResult } from "@/lib/ai/types";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, isEstimate, kcalNumber, shownKcal } from "@/lib/format";
 import { DISH_TYPES, OTHER_DISH } from "@/lib/mock-ai/restaurant";
 import type { Confidence } from "@/lib/types";
 import { ConfidenceIndicator } from "./ConfidenceIndicator";
@@ -88,7 +88,7 @@ export function FoodSearchPanel({
                 <span className="text-headline block">{f.name}</span>
                 <span className="text-caption text-ink-2">{f.servingLabel}</span>
               </span>
-              <span className="text-body tabular shrink-0">{formatNumber(f.kcal)} kcal</span>
+              <span className="text-body tabular shrink-0">{kcalNumber(f.kcal, "good")} kcal</span>
             </button>
           </li>
         ))}
@@ -191,12 +191,14 @@ export function FoodLogPanel({
           }}
           kcalPerServing={food.kcal}
           label="Servings"
+          level={confidence}
         />
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-3">
         <p className="font-display tabular text-[34px] leading-10 font-semibold">
-          {formatNumber(kcal)} <span className="text-title">kcal</span>
+          {isEstimate(confidence) && <span className="text-title">about </span>}
+          {formatNumber(shownKcal(kcal, confidence))} <span className="text-title">kcal</span>
         </p>
         <ConfidenceIndicator level={confidence} />
       </div>

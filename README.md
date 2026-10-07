@@ -24,6 +24,31 @@ steps (import a recipe, snap your plate, fix a log). It's part of the page, not 
 pop-up: close it with ×, and bring it back from **Me → About this prototype →
 Show the 60-second tour**.
 
+## How sure Ladle is
+
+Every calorie number has a label:
+
+- **Your recipe ✓**: you've confirmed your portion of this recipe at least 3 times,
+  so this number is as good as your recipe.
+- **Good estimate**: from your recipe, but your portion hasn't been confirmed 3
+  times yet (or typical values for a snack or drink).
+- **Rough estimate**: from a photo or a restaurant dish type, without a recipe.
+- **From the label**: from a packaged food's nutrition label.
+
+A portion counts as confirmed when you choose it: from the plate photo result, the
+portion helper, the portion picker, or by changing a meal's portion. Quick logs
+(the one-tap **Log · 420** buttons, the "Your usual" card, leftovers) don't count.
+Estimates are shown rounded to the nearest 10 with "about" (for example
+"Log · about 530"); recipe totals and the daily budget stay exact.
+
+On Today, **Your usual** suggests the likely meal for now (for example "Thursday
+dinner · Your usual chicken adobo?"), from your history, the weekday, the time of
+day and what you cooked recently. "Not today" shows the next idea, up to three.
+
+Quick fixes say where a change happens ("+1 tbsp in the pan · +120 for the batch")
+and lead with what it means for you: "On your plate: +30 kcal". Only one sheet is
+ever open at a time; deeper steps happen inside it.
+
 ## Screenshots
 
 | Today | Import a recipe | Plate photo | Quick fix |
@@ -48,9 +73,11 @@ The prototype supports these five tasks for moderated sessions:
 4. It's Thursday and you're having your usual adobo. Log it.
 5. Add your grandmother's braised pork from her recipe card (Add recipe → Photo → Use example card).
 
-Visitors can also bring their own recipes, links and photos. With your own plate
-photo, a portion helper shows the pan divided into servings: slide to show how
-much you took (in quarter servings), and the portion chips follow.
+Visitors can also bring their own recipes, links and photos. After every plate
+photo (the sample or your own), a portion helper shows the pan divided into
+servings: slide to show how much you took (in quarter servings), and the portion
+chips follow. With the sample photo it starts at Ladle's estimate (1 serving, a
+quarter of the batch); with your own photos, at your usual portion.
 
 The demo link is `https://www.tiktok.com/@homecook/video/demo-airfryer-garlic-chicken`.
 The older link (`…/demo-garlic-chicken`) still works and opens the same recipe.

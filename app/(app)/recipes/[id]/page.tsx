@@ -9,12 +9,13 @@ import { useEffect, useState } from "react";
 import { BatchSheet } from "@/components/BatchSheet";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
+import { LogButton } from "@/components/LogButton";
 import { Sheet } from "@/components/Sheet";
 import { useToast } from "@/components/Toast";
 import { BackLink, Button, ButtonLink, Card, ScreenHeader } from "@/components/ui";
-import { formatNumber } from "@/lib/format";
+import { formatNumber, kcalNumber } from "@/lib/format";
 import { pendingSuggestion } from "@/lib/fixes";
-import { activeBatch, kcalFor, recipeConfidence, sumMacros } from "@/lib/logic";
+import { activeBatch, kcalFor, logKcal, recipeConfidence, sumMacros } from "@/lib/logic";
 import { actions, useLadle } from "@/lib/store";
 
 function formatDay(iso: string) {
@@ -74,7 +75,7 @@ export default function RecipeCardPage() {
     const log = actions.logRecipe(recipe.id, 1, { via: "one-tap" });
     if (!log) return;
     toast({
-      message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal${log.batchId ? " · from your batch" : ""}`,
+      message: `${recipe.name} logged · ${kcalNumber(log.kcal, log.confidence)} kcal${log.batchId ? " · from your batch" : ""}`,
       actionLabel: "Undo",
       onAction: () => actions.deleteLog(log.id),
     });
@@ -176,9 +177,13 @@ export default function RecipeCardPage() {
             </p>
           )}
           <div className="mt-4 flex flex-col gap-2">
-            <Button onClick={logServing}>
-              {batch ? "Log a serving from the batch" : "Log a serving"}
-            </Button>
+            <LogButton
+              onClick={logServing}
+              name={recipe.name}
+              portion={1}
+              kcal={logKcal(recipe, 1, batch)}
+              level={recipeConfidence(recipe, state.data.fixes)}
+            />
             <Button variant="secondary" onClick={() => setBatchOpen(true)}>
               Cook as a batch
             </Button>

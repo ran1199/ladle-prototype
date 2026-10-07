@@ -165,6 +165,17 @@ body {
   }
 }
 
+/* Steps inside a sheet: the next step slides in gently from the side. */
+@keyframes step-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+.step-in {
+  animation: step-in var(--dur) var(--ease-out);
+}
+
 /* "Reading the recipe": steam rising from the pot. */
 @keyframes steam {
   0% {

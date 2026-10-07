@@ -77,6 +77,12 @@ export type LogEntry = {
   portion: number;
   kcal: number;
   confidence: Confidence;
+  /**
+   * The user actively confirmed the portion (plate photo result, portion helper,
+   * portion picker, or editing the portion). Quick logs (one-tap Log, the
+   * "Your usual" card, leftovers) are false. Missing on older logs.
+   */
+  confirmed?: boolean;
   /** True if this log added one to its recipe's confirmed count (undone if the log is deleted). */
   countedConfirmation?: boolean;
   /** The recipe's previous "last eaten" time, restored if this log is deleted. */

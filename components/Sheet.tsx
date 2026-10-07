@@ -26,6 +26,13 @@ type SheetHost = {
 
 const SheetHostContext = createContext<SheetHost>({ element: null, track: () => {} });
 
+/** True inside a sheet. One sheet at a time: deeper steps happen inside the sheet. */
+const InSheetContext = createContext(false);
+
+export function useInSheet(): boolean {
+  return useContext(InSheetContext);
+}
+
 /** Provides the place sheets appear in, and tells the app when one is open. */
 export function SheetHostProvider({
   element,
@@ -158,7 +165,7 @@ export function Sheet({
           <h2 id={titleId} className={hideTitle ? "sr-only" : "text-title mb-3"}>
             {title}
           </h2>
-          {children}
+          <InSheetContext.Provider value={true}>{children}</InSheetContext.Provider>
         </div>
       </div>
     </div>,

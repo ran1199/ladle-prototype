@@ -3,9 +3,14 @@
 // "Today was different?" (F7; task T3). Pick what changed, see the calorie
 // effect, then choose "Just this time" (this log only) or "Always" (update the
 // saved recipe). If the same "Just this time" fix has now been made twice,
-// Ladle asks: "You usually add more oil to this. Update your recipe?"
+// Ladle asks: "You usually add more oil to this. Update your recipe?" Then a
+// short confirmation, in the same place.
+//
+// One sheet at a time: `QuickFixSteps` is the content, used as a step inside
+// the meal's sheet (LogDetailSheet); `QuickFixSheet` wraps it in its own sheet
+// for the camera result, which isn't a sheet.
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { loadAI } from "@/lib/ai/lazy";
 import { customOption, FIX_KINDS, fixOptions, type FixOption, type Suggestion } from "@/lib/fixes";
 import { formatNumber } from "@/lib/format";
@@ -13,43 +18,56 @@ import type { FixKind, Recipe } from "@/lib/types";
 import { Sheet } from "./Sheet";
 import { Button } from "./ui";
 
-type Step =
+export type FixStep =
   | { name: "choose" }
   | { name: "options"; kind: FixKind }
-  | { name: "suggest"; suggestion: Suggestion; message: string };
+  | { name: "suggest"; suggestion: Suggestion; message: string }
+  | { name: "done"; message: string };
+
+/** How long the confirmation shows before the sheet closes. */
+const DONE_MS = 1400;
+
+/** The title for each step (the sheet shows it). */
+export function fixStepTitle(step: FixStep): string {
+  if (step.name === "suggest") return step.message;
+  if (step.name === "done") return "Done";
+  if (step.name === "options") return FIX_KINDS.find((k) => k.kind === step.kind)?.label ?? "";
+  return "Today was different?";
+}
 
 function signed(n: number) {
   return `${n >= 0 ? "+" : "−"}${formatNumber(Math.abs(n))}`;
 }
 
-export function QuickFixSheet({
-  open,
-  onClose,
-  recipe,
-  portion,
-  baseKcal,
-  initialKind,
-  onApply,
-  onResolve,
-  onDone,
-}: {
-  open: boolean;
-  onClose: () => void;
+type StepsProps = {
   recipe: Recipe | null;
   portion: number;
   /** This plate's calories before the fix. */
   baseKcal: number;
-  /** Open straight on one kind (e.g. a "More oil" chip was tapped). */
-  initialKind?: FixKind;
+  step: FixStep;
+  onStep: (step: FixStep) => void;
+  /** "‹ Back" on the options step (to the kinds, or to the meal). Hidden if missing. */
+  onBack?: () => void;
   /** Performs the fix; returns a suggestion if one should be offered next. */
   onApply: (option: FixOption, scope: "once" | "always") => Suggestion | null;
   /** The answer to the suggestion. */
   onResolve: (suggestion: Suggestion, accept: boolean) => void;
-  /** Finished: the parent closes the sheet and shows this message. */
+  /** Finished (after the confirmation): the parent closes the sheet. */
   onDone: (message: string) => void;
-}) {
-  const start: Step = initialKind ? { name: "options", kind: initialKind } : { name: "choose" };
-  const [step, setStep] = useState<Step>(start);
+};
+
+/** The quick-fix steps, without a sheet around them. */
+export function QuickFixSteps({
+  recipe,
+  portion,
+  baseKcal,
+  step,
+  onStep: setStep,
+  onBack,
+  onApply,
+  onResolve,
+  onDone,
+}: StepsProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [freeText, setFreeText] = useState("");
   const [estimating, setEstimating] = useState(false);
@@ -62,21 +80,6 @@ export function QuickFixSheet({
   const freeTextId = useId();
   const manualId = useId();
 
-  // Start fresh each time the sheet opens.
-  const [wasOpen, setWasOpen] = useState(open);
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) {
-      setStep(start);
-      setSelected(null);
-      setFreeText("");
-      setCustom(null);
-      setUnknown(false);
-      setManualKcal("");
-      setError(null);
-    }
-  }
-
   const kinds = recipe ? FIX_KINDS : FIX_KINDS.filter((k) => k.kind === "other");
   const options =
     step.name === "options"
@@ -86,8 +89,7 @@ export function QuickFixSheet({
         ]
       : [];
   const option = options.find((o) => o.detail === selected) ?? options[0] ?? null;
-  const kindLabel =
-    step.name === "options" ? FIX_KINDS.find((k) => k.kind === step.kind)?.label : undefined;
+  const kindLabel = step.name === "options" ? fixStepTitle(step) : undefined;
 
   async function estimate() {
     const text = freeText.trim();
@@ -115,7 +117,12 @@ export function QuickFixSheet({
   function applyManual() {
     const kcal = Number(manualKcal);
     if (!manualKcal.trim() || !Number.isFinite(kcal)) return;
-    const option = customOption(recipe, portion, kcal / portion, freeText.trim() || "Something else");
+    const option = customOption(
+      recipe,
+      portion,
+      kcal / portion,
+      freeText.trim() || "Something else",
+    );
     setCustom(option);
     setSelected(option.detail);
     setUnknown(false);
@@ -125,24 +132,28 @@ export function QuickFixSheet({
     if (!option) return;
     const message = scope === "always" ? "Ladle will remember that." : "Changed for today.";
     const suggestion = onApply(option, scope);
-    if (suggestion) setStep({ name: "suggest", suggestion, message });
-    else onDone(message);
+    setStep(suggestion ? { name: "suggest", suggestion, message } : { name: "done", message });
   }
+
+  // The confirmation shows briefly in the same sheet, then the sheet closes.
+  const doneMessage = step.name === "done" ? step.message : null;
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  });
+  useEffect(() => {
+    if (doneMessage === null) return;
+    const t = setTimeout(() => onDoneRef.current(doneMessage), DONE_MS);
+    return () => clearTimeout(t);
+  }, [doneMessage]);
 
   const chip = (active: boolean) =>
     `text-body tabular min-h-12 rounded-[var(--radius-control)] px-3 text-left font-medium transition-colors duration-200 ${
       active ? "bg-ink text-bg" : "bg-surface-2 text-ink hover:brightness-[0.97]"
     }`;
 
-  const title =
-    step.name === "suggest"
-      ? step.message
-      : step.name === "options"
-        ? (kindLabel ?? "")
-        : "Today was different?";
-
   return (
-    <Sheet open={open} onClose={onClose} title={title}>
+    <div key={step.name} className="step-in">
       {step.name === "choose" && (
         <div className="grid grid-cols-2 gap-2">
           {kinds.map((k) => (
@@ -163,13 +174,13 @@ export function QuickFixSheet({
 
       {step.name === "options" && (
         <>
-          {!initialKind && (
+          {onBack && (
             <button
               type="button"
-              onClick={() => setStep({ name: "choose" })}
-              className="text-headline -mt-2 mb-2 min-h-10 text-accent-strong"
+              onClick={onBack}
+              className="text-headline -mt-2 mb-2 min-h-11 text-accent-strong"
             >
-              ‹ Other changes
+              ‹ Back
             </button>
           )}
 
@@ -272,13 +283,20 @@ export function QuickFixSheet({
 
           {option && (
             <>
-              <p className="text-body tabular mt-4">
-                On your plate: <strong>{signed(option.plateDelta)} kcal</strong>
-                <span className="text-ink-2">
-                  {" "}
-                  ({formatNumber(baseKcal)} → {formatNumber(baseKcal + option.plateDelta)})
-                </span>
-              </p>
+              <div
+                className="mt-4 rounded-[var(--radius-control)] bg-surface-2 px-4 py-3"
+                aria-live="polite"
+              >
+                <p className="text-title tabular">
+                  On your plate: {signed(option.plateDelta)} kcal
+                </p>
+                <p className="text-caption tabular text-ink-2">
+                  {formatNumber(baseKcal)} → {formatNumber(baseKcal + option.plateDelta)} kcal
+                  {option.potDelta !== null && recipe && option.kind !== "other"
+                    ? ` · your share of ${signed(option.potDelta)} for the batch`
+                    : ""}
+                </p>
+              </div>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -319,7 +337,7 @@ export function QuickFixSheet({
                 className="flex-1"
                 onClick={() => {
                   onResolve(step.suggestion, true);
-                  onDone("Recipe updated. Ladle will remember that.");
+                  setStep({ name: "done", message: "Recipe updated. Ladle will remember that." });
                 }}
               >
                 Update recipe
@@ -329,7 +347,7 @@ export function QuickFixSheet({
                 className="flex-1"
                 onClick={() => {
                   onResolve(step.suggestion, false);
-                  onDone(step.message);
+                  setStep({ name: "done", message: step.message });
                 }}
               >
                 Not now
@@ -338,6 +356,42 @@ export function QuickFixSheet({
           </div>
         </>
       )}
+      {step.name === "done" && (
+        <p role="status" className="text-body flex items-center gap-3 py-2">
+          <span
+            aria-hidden="true"
+            className="text-headline flex size-9 shrink-0 items-center justify-center rounded-full bg-confirmed text-surface"
+          >
+            ✓
+          </span>
+          {step.message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The quick fix in its own sheet (for the camera result, which isn't a sheet). */
+export function QuickFixSheet({
+  open,
+  onClose,
+  ...props
+}: Omit<StepsProps, "step" | "onStep" | "onBack"> & { open: boolean; onClose: () => void }) {
+  const [step, setStep] = useState<FixStep>({ name: "choose" });
+  // Start fresh each time the sheet opens.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setStep({ name: "choose" });
+  }
+  return (
+    <Sheet open={open} onClose={onClose} title={fixStepTitle(step)}>
+      <QuickFixSteps
+        {...props}
+        step={step}
+        onStep={setStep}
+        onBack={() => setStep({ name: "choose" })}
+      />
     </Sheet>
   );
 }
