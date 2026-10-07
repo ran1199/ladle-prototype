@@ -49,6 +49,8 @@ export type PlateContext = {
   batches: { recipeId: string; cookedAt: string; servingsLeft: number }[];
   photoColor?: PhotoColor;
   demoAsset?: DemoAsset;
+  /** Treat today as this weekday (0 = Sunday), e.g. the "Treat today as Thursday" test control. */
+  weekday?: number;
 };
 
 export interface LadleAI {

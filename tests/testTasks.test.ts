@@ -12,7 +12,7 @@ test("next task follows what the participant has done", () => {
   expect(tasksDone(data, now).T4).toBe(true);
   expect(nextTask(data, now)?.id).toBe("T1");
   const added = addRecipe(data, {
-    name: "Garlic chicken stir-fry",
+    name: "Air-fryer garlic chicken with mushrooms",
     servings: 4,
     ingredients: [],
     source: null,
@@ -24,7 +24,7 @@ test("next task follows what the participant has done", () => {
   expect(nextTask(data, now)?.id).toBe("T2");
   data = addRecipeLog(data, added.id, 1, { at: now }).data;
   expect(nextTask(data, now)?.id).toBe("T3");
-  data = { ...data, fixes: [...data.fixes, { id: "f1", at: now.toISOString(), recipeKey: "garlic-chicken-stir-fry", kind: "more-oil", detail: "+1 tbsp", scope: "always" }] };
+  data = { ...data, fixes: [...data.fixes, { id: "f1", at: now.toISOString(), recipeKey: "air-fryer-garlic-chicken", kind: "more-oil", detail: "+1 tbsp", scope: "always" }] };
   expect(nextTask(data, now)?.id).toBe("T5");
   data = addRecipe(data, { name: "Grandma’s braised pork", servings: 6, ingredients: [], source: null, illustration: "pot", cuisine: null, historyNote: "Imported" }).data;
   expect(nextTask(data, now)).toBeNull();

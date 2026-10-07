@@ -1,5 +1,7 @@
 // Shared data shapes for Ladle. Everything here is stored in the visitor's own browser.
 
+import type { LogVia } from "./events";
+
 export type Mode = "demo" | "live";
 
 /** How sure Ladle is about a calorie number (shown as 1–3 dots). */
@@ -34,7 +36,7 @@ export type ChangeEntry = {
 
 export type Recipe = {
   id: string;
-  /** Stable key from the imported name (e.g. "garlic-chicken-stir-fry"), used to match fixes. */
+  /** Stable key from the imported name (e.g. "air-fryer-garlic-chicken"), used to match fixes. */
   key?: string;
   name: string;
   cuisine: string | null;
@@ -83,6 +85,8 @@ export type LogEntry = {
   adjustments?: LogAdjustment[];
   /** Average colour of the plate photo it was logged from (kept instead of the photo). */
   photoColor?: PhotoColor;
+  /** How it was logged (plate photo, one-tap, leftovers…). Missing on older logs. */
+  via?: LogVia;
 };
 
 export type Batch = {
@@ -139,4 +143,6 @@ export type AppData = {
 /** Settings that survive "Reset demo". */
 export type Prefs = {
   mode: Mode;
+  /** The visitor closed the "Try Ladle in 60 seconds" card (Me → About brings it back). */
+  tourDismissed?: boolean;
 };

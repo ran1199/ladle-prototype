@@ -8,7 +8,7 @@ import {
   type FixOption,
   type Suggestion,
 } from "./fixes";
-import { recipeKcalPerServing, recipeTotalKcal } from "./seed";
+import { recipeTotalKcal } from "./seed";
 import type { AppData, Batch, Confidence, Fix, LogEntry, Recipe } from "./types";
 
 /** Logs needed before a recipe shows "Your recipe ✓". */
@@ -32,8 +32,14 @@ function adjustmentKcal(log: LogEntry): number {
   return (log.adjustments ?? []).reduce((s, a) => s + a.kcalDelta, 0);
 }
 
+/** Calories for a portion, from the exact recipe total (2 servings of 2,133 ÷ 4 = 1,067). */
 export function kcalFor(recipe: Recipe, portion: number): number {
-  return Math.round(recipeKcalPerServing(recipe) * portion);
+  return Math.round(exactKcalPerServing(recipe) * portion);
+}
+
+/** kcal per serving before rounding (for portion chips). */
+export function exactKcalPerServing(recipe: Recipe): number {
+  return recipeTotalKcal(recipe) / recipe.servings;
 }
 
 const FRACTIONS: Record<number, string> = { 0.25: "¼", 0.5: "½", 0.75: "¾" };
@@ -170,7 +176,12 @@ export function addRecipeLog(
   data: AppData,
   recipeId: string,
   portion: number,
-  opts: { batchId?: string; at?: Date; photoColor?: LogEntry["photoColor"] } = {},
+  opts: {
+    batchId?: string;
+    at?: Date;
+    photoColor?: LogEntry["photoColor"];
+    via?: LogEntry["via"];
+  } = {},
 ): { data: AppData; log: LogEntry | null } {
   const recipe = data.recipes.find((r) => r.id === recipeId);
   if (!recipe) return { data, log: null };
@@ -188,6 +199,7 @@ export function addRecipeLog(
     countedConfirmation: true,
     prevLastEatenAt: recipe.lastEatenAt,
     ...(opts.photoColor ? { photoColor: opts.photoColor } : {}),
+    ...(opts.via ? { via: opts.via } : {}),
   };
   return {
     log,
@@ -268,7 +280,7 @@ export function editLog(
   };
 }
 
-/** "Garlic chicken stir-fry" → "garlic-chicken-stir-fry" */
+/** "Tomato and egg stir-fry" → "tomato-and-egg-stir-fry" */
 export function slugify(name: string): string {
   return (
     name
@@ -279,6 +291,20 @@ export function slugify(name: string): string {
   );
 }
 
+/**
+ * Short, stable keys for recipes whose full names are long. The demo recipe
+ * keeps "air-fryer-garlic-chicken", which its seeded fix and the test tasks use.
+ */
+const KEY_ALIASES: Record<string, string> = {
+  "air-fryer-garlic-chicken-with-mushrooms": "air-fryer-garlic-chicken",
+};
+
+/** The key a recipe gets from its name (matches fixes to the recipe). */
+export function recipeKeyFor(name: string): string {
+  const slug = slugify(name);
+  return KEY_ALIASES[slug] ?? slug;
+}
+
 export type NewRecipe = Pick<
   Recipe,
   "name" | "servings" | "ingredients" | "source" | "photo" | "illustration" | "cuisine"
@@ -286,7 +312,7 @@ export type NewRecipe = Pick<
 
 /** Adds an imported recipe. Returns the new data and the recipe's id. */
 export function addRecipe(data: AppData, input: NewRecipe): { data: AppData; id: string } {
-  const key = slugify(input.name);
+  const key = recipeKeyFor(input.name);
   let id = key;
   for (let n = 2; data.recipes.some((r) => r.id === id); n++) id = `${key}-${n}`;
   const now = new Date().toISOString();

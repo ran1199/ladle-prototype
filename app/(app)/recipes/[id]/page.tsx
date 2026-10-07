@@ -71,7 +71,7 @@ export default function RecipeCardPage() {
 
   function logServing() {
     if (!recipe) return;
-    const log = actions.logRecipe(recipe.id, 1);
+    const log = actions.logRecipe(recipe.id, 1, { via: "one-tap" });
     if (!log) return;
     toast({
       message: `${recipe.name} logged · ${formatNumber(log.kcal)} kcal${log.batchId ? " · from your batch" : ""}`,

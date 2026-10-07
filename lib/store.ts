@@ -19,10 +19,13 @@ import {
   type NewRecipe,
 } from "./logic";
 import type { FixOption, Suggestion } from "./fixes";
+import { DEMO_RECIPE_KEY } from "./ai/scripted";
 import { buildSeed } from "./seed";
 import { storage } from "./storage";
 import { clearDraft } from "./draft";
+import { emitEvent, type LogVia } from "./events";
 import { clearPlate } from "./plate";
+import { clearSessions } from "./sessions";
 import type { AppData, Batch, Confidence, LogEntry, PhotoColor, Prefs, Profile } from "./types";
 
 const DATA_KEY = "ladle:data:v1";
@@ -58,7 +61,7 @@ let state: LadleState | null = null;
 const listeners = new Set<() => void>();
 
 /** Brings data saved by an earlier version of the prototype up to date. */
-function upgrade(data: AppData): AppData {
+export function upgrade(data: AppData): AppData {
   // Milestone 6 added meal types to Maya's recipes (a hint for plate matching).
   const seedMeals = new Map(buildSeed().recipes.map((r) => [r.id, r.mealTypes]));
   return {
@@ -67,9 +70,12 @@ function upgrade(data: AppData): AppData {
       r.mealTypes || !seedMeals.get(r.id) ? r : { ...r, mealTypes: seedMeals.get(r.id) },
     ),
     // Milestone 5 added `detail` to fixes; the seeded one is "+1 tbsp" of oil.
-    fixes: data.fixes.map((f) =>
-      f.detail ? f : { ...f, detail: f.kind === "more-oil" ? "+1 tbsp" : "" },
-    ),
+    // The critique fixes moved the seeded fix from the stir-fry to the new
+    // demo recipe, the air-fryer garlic chicken.
+    fixes: data.fixes.map((f) => {
+      const fix = f.detail ? f : { ...f, detail: f.kind === "more-oil" ? "+1 tbsp" : "" };
+      return fix.id === "seed-fix-oil" ? { ...fix, recipeKey: DEMO_RECIPE_KEY } : fix;
+    }),
   };
 }
 
@@ -128,26 +134,50 @@ export const actions = {
   deleteAllData() {
     clearDraft();
     clearPlate();
+    clearSessions();
     setData(() => emptyData());
   },
   /** Change profile fields (name, sex, daily target, starting weight). */
   updateProfile(changes: Partial<Profile>) {
     setData((data) => ({ ...data, profile: { ...data.profile, ...changes } }));
   },
-  /** Log a portion of a saved recipe to today (optionally from a batch). */
+  /**
+   * Log a portion of a saved recipe to today (optionally from a batch).
+   * `via` says how (plate photo, one-tap…); `suggestedPortion` is what Ladle
+   * suggested, for the usability session recorder.
+   */
   logRecipe(
     recipeId: string,
     portion: number,
-    opts: { batchId?: string; photoColor?: PhotoColor } = {},
+    opts: {
+      batchId?: string;
+      photoColor?: PhotoColor;
+      via?: LogVia;
+      suggestedPortion?: number;
+      acceptedEstimate?: boolean;
+    } = {},
   ): LogEntry | null {
     let created: LogEntry | null = null;
+    const { suggestedPortion, acceptedEstimate, ...logOpts } = opts;
     setData((data) => {
       // Cooked as a batch? Then this serving comes out of the batch.
-      const batchId = opts.batchId ?? activeBatch(data, recipeId)?.id;
-      const result = addRecipeLog(data, recipeId, portion, { ...opts, batchId });
+      const batchId = logOpts.batchId ?? activeBatch(data, recipeId)?.id;
+      const result = addRecipeLog(data, recipeId, portion, { ...logOpts, batchId });
       created = result.log;
       return result.data;
     });
+    if (created) {
+      const recipe = getSnapshot().data.recipes.find((r) => r.id === recipeId);
+      emitEvent({
+        type: "meal-logged",
+        recipeId,
+        recipeKey: recipe ? (recipe.key ?? recipe.id) : null,
+        via: opts.via ?? "other",
+        portion,
+        suggestedPortion,
+        acceptedEstimate,
+      });
+    }
     return created;
   },
   /** "Cook as a batch". Returns the new batch and a way to undo it. */
@@ -170,7 +200,8 @@ export const actions = {
   },
   /** Test control: make every batch look `days` older (to try "Still have it?"). */
   ageBatches(days: number) {
-    const shift = (iso: string) => new Date(new Date(iso).getTime() - days * 86_400_000).toISOString();
+    const shift = (iso: string) =>
+      new Date(new Date(iso).getTime() - days * 86_400_000).toISOString();
     setData((data) => ({
       ...data,
       batches: data.batches.map((b) => ({
@@ -193,34 +224,47 @@ export const actions = {
       created = result.log;
       return result.data;
     });
+    emitEvent({ type: "meal-logged", recipeId: null, via: "food", portion: food.portion ?? 1 });
     return created!;
   },
   updateLog(logId: string, changes: { portion?: number; at?: string }) {
     setData((data) => editLog(data, logId, changes));
   },
-  /** Save an imported recipe. Returns its id. */
-  saveRecipe(input: NewRecipe): string {
+  /** Save an imported recipe. Returns its id. `oilAnswer` is noted for test sessions. */
+  saveRecipe(input: NewRecipe, opts: { oilAnswer?: string } = {}): string {
     let id = "";
     setData((data) => {
       const result = addRecipe(data, input);
       id = result.id;
       return result.data;
     });
+    const key = getSnapshot().data.recipes.find((r) => r.id === id)?.key ?? id;
+    emitEvent({ type: "recipe-saved", recipeId: id, key, oilAnswer: opts.oilAnswer });
     return id;
   },
   /** Apply a quick fix to a log. Returns a suggestion if the same fix was made twice. */
   applyFix(input: { option: FixOption; scope: "once" | "always"; logId: string }) {
     let suggestion: Suggestion | null = null;
+    const before = getSnapshot().data;
+    const log = before.logs.find((l) => l.id === input.logId);
+    const recipe = before.recipes.find((r) => r.id === log?.recipeId);
     setData((data) => {
       const result = applyFix(data, input);
       suggestion = result.suggestion;
       return result.data;
+    });
+    emitEvent({
+      type: "fix-applied",
+      recipeKey: recipe ? (recipe.key ?? recipe.id) : null,
+      kind: input.option.kind,
+      scope: input.scope,
     });
     return suggestion as Suggestion | null;
   },
   /** "Update recipe" (accept) or "Not now". */
   resolveSuggestion(recipeId: string, suggestion: Suggestion, accept: boolean) {
     setData((data) => resolveSuggestion(data, recipeId, suggestion, accept));
+    emitEvent({ type: "suggestion-resolved", accept });
   },
   /** Remember that a recipe card was opened (plate matching ranks it higher for a few hours). */
   markOpened(recipeId: string) {
@@ -230,6 +274,14 @@ export const actions = {
         r.id === recipeId ? { ...r, lastOpenedAt: new Date().toISOString() } : r,
       ),
     }));
+  },
+  /** Close (true) or bring back (false) the "Try Ladle in 60 seconds" card. */
+  setTourDismissed(dismissed: boolean) {
+    const current = getSnapshot();
+    const prefs = { ...current.prefs, tourDismissed: dismissed };
+    storage.set(PREFS_KEY, prefs);
+    state = { ...current, prefs };
+    emit();
   },
   /** Delete a log (also used for Undo). */
   deleteLog(logId: string) {

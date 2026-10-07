@@ -5,7 +5,8 @@
 // beside it (or below it on narrower tablets).
 
 import { usePathname } from "next/navigation";
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
+import { SessionRecorder } from "./SessionRecorder";
 import { SheetHostProvider } from "./Sheet";
 import { SidePanel } from "./SidePanel";
 import { SiteConfigProvider } from "./SiteConfig";
@@ -49,6 +50,7 @@ export function AppFrame({
   const pathname = usePathname();
   const [sheetHost, setSheetHost] = useState<HTMLDivElement | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const appRoot = useRef<HTMLDivElement>(null);
   const onOpenCountChange = useCallback((n: number) => setSheetOpen(n > 0), []);
   // Full-screen steps (camera, importing a recipe) hide the tab bar.
   const showTabBar = !["/camera", "/recipes/new", "/add-food"].includes(pathname);
@@ -58,7 +60,9 @@ export function AppFrame({
       <div className="min-[769px]:flex min-[769px]:min-h-dvh min-[769px]:flex-wrap min-[769px]:items-center min-[960px]:items-start min-[769px]:justify-center min-[769px]:gap-x-16 min-[769px]:gap-y-4 min-[769px]:p-6">
         {/* The phone: full screen on phones, a framed device on bigger screens. */}
         <div className="phone-frame h-dvh min-[769px]:rounded-[60px] min-[769px]:bg-[var(--frame)] min-[769px]:p-3 min-[769px]:shadow-[0_30px_80px_rgb(43_36_32/0.25)]">
-          <div className="app-root relative isolate flex h-full min-w-0 flex-col overflow-hidden bg-bg min-[769px]:rounded-[48px]">
+          <div
+            ref={appRoot}
+            className="app-root relative isolate flex h-full min-w-0 flex-col overflow-hidden bg-bg min-[769px]:rounded-[48px]">
             <StatusBar light={pathname === "/camera"} />
             <ToastProvider>
               <SheetHostProvider element={sheetHost} onOpenCountChange={onOpenCountChange}>
@@ -68,6 +72,7 @@ export function AppFrame({
                   </main>
                   {showTabBar && <TabBar />}
                 </div>
+                <SessionRecorder root={appRoot} />
               </SheetHostProvider>
             </ToastProvider>
             <TestOverlay aboveTabBar={showTabBar} />

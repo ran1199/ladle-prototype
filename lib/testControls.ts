@@ -23,10 +23,20 @@ export type TestFlags = {
   timerStartedAt?: number | null;
   /** Stopwatch: time counted before the current run. */
   timerElapsedMs?: number;
+  /** Hide the "Try Ladle in 60 seconds" card on Today (on during test sessions). */
+  hideTour?: boolean;
+  /** Suggestions treat today as Thursday, so the usual adobo comes first (task T4). */
+  treatAsThursday?: boolean;
 };
 
 /** On/off switches (the other fields are the stopwatch's numbers). */
-export type TestSwitch = "failNext" | "hidePill" | "showTimer" | "showNextTask";
+export type TestSwitch =
+  | "failNext"
+  | "hidePill"
+  | "showTimer"
+  | "showNextTask"
+  | "hideTour"
+  | "treatAsThursday";
 
 const listeners = new Set<() => void>();
 let snapshot: TestFlags | null = null;

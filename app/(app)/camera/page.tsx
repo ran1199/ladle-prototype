@@ -2,28 +2,38 @@
 
 // Plate camera and photo log (F5, F8; task T2).
 // Capture → (photo + draft saved locally) → "Looking at your plate…" → result:
-// "Looks like Garlic chicken stir-fry", portion chips, calories, confidence, Log it.
+// "Looks like Air-fryer garlic chicken with mushrooms", portion chips, calories, confidence, Log it.
 // Ingredients always come from the recipe; the photo only measures the share.
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { ConfidenceIndicator } from "@/components/ConfidenceIndicator";
 import { DishIllustration } from "@/components/DishIllustration";
 import { CameraIcon, CloseIcon, SearchIcon } from "@/components/icons";
 import { PrototypeBadge } from "@/components/PrototypeBadge";
 import { DishTypePanel, FoodLogPanel, FoodSearchPanel, ROUGH_NOTE } from "@/components/OtherFood";
+import { PortionHelper } from "@/components/PortionHelper";
 import { PortionPicker } from "@/components/PortionPicker";
 import { QuickFixSheet } from "@/components/QuickFixSheet";
 import { useToast } from "@/components/Toast";
 import { Button } from "@/components/ui";
 import { loadAI } from "@/lib/ai/lazy";
 import type { FoodResult, PlateContext, RecipeSummary } from "@/lib/ai/types";
-import { DEMO_PLATE } from "@/lib/ai/scripted";
+import { DEMO_PLATE, DEMO_RECIPE_NAME } from "@/lib/ai/scripted";
 import { DEMO_LINK } from "@/lib/content";
 import { startDraft } from "@/lib/draft";
+import { emitEvent } from "@/lib/events";
 import { formatNumber } from "@/lib/format";
-import { formatPortion, kcalFor, recipeConfidence } from "@/lib/logic";
+import {
+  activeBatch,
+  exactKcalPerServing,
+  formatPortion,
+  kcalFor,
+  logKcal,
+  recipeConfidence,
+} from "@/lib/logic";
+import { recipeTotalKcal } from "@/lib/seed";
 import {
   averageColor,
   clearPlate,
@@ -36,7 +46,8 @@ import {
   type PendingPlate,
 } from "@/lib/plate";
 import { actions, useLadle } from "@/lib/store";
-import type { AppData, Confidence, Fix, Recipe } from "@/lib/types";
+import { getTestFlags } from "@/lib/testControls";
+import type { AppData, Confidence, Recipe } from "@/lib/types";
 
 /* ---------- Top bar ---------- */
 
@@ -77,6 +88,8 @@ function Capture({
   const fileRef = useRef<HTMLInputElement>(null);
   const [cam, setCam] = useState<CamState>("off");
   const [error, setError] = useState<string | null>(null);
+  // Arrived from the 60-second tour: point at the sample photo.
+  const fromTour = useSearchParams().has("tour");
 
   async function startCamera() {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -190,8 +203,13 @@ function Capture({
       )}
 
       <div className="px-4 pt-4" style={{ paddingBottom: "calc(var(--safe-bottom) + 16px)" }}>
+        {fromTour && (
+          <p className="text-caption mb-2 text-center font-semibold text-white/85">
+            Tour step 2: use the sample photo of Maya&rsquo;s plate
+          </p>
+        )}
         <Button
-          className="w-full"
+          className={`w-full ${fromTour ? "ring-4 ring-white/70 ring-offset-2 ring-offset-[#14110e]" : ""}`}
           onClick={() => onPhoto({ src: DEMO_PLATE.src, alt: DEMO_PLATE.alt, isSample: true })}
         >
           Use sample photo
@@ -379,22 +397,23 @@ function SomethingNew({
   );
 }
 
-function Result({
-  plate,
-  recipes,
-  fixes,
-}: {
-  plate: PendingPlate;
-  recipes: Recipe[];
-  fixes: Fix[];
-}) {
+function Result({ plate, data }: { plate: PendingPlate; data: AppData }) {
+  const { recipes, fixes } = data;
   const router = useRouter();
   const toast = useToast();
   const result = plate.result;
+  // The user's own photo: the portion helper (pan + slider) sets the share.
+  const ownPhoto = !plate.photo.isSample;
   const suggested = recipes.find((r) => r.id === result?.matchRecipeId) ?? null;
   const [recipe, setRecipe] = useState<Recipe | null>(suggested);
   const [picked, setPicked] = useState(false);
-  const [portion, setPortion] = useState(result?.portionServings ?? 1);
+  const [portion, setPortionState] = useState(
+    ownPhoto ? (suggested?.usualPortion ?? 1) : (result?.portionServings ?? 1),
+  );
+  const setPortion = (p: number) => {
+    if (p !== portion) emitEvent({ type: "edit", what: "portion" });
+    setPortionState(p);
+  };
   const [mode, setMode] = useState<"main" | "pick" | "new">(
     suggested ? "main" : result?.isNewFood && result.roughGuess ? "new" : "pick",
   );
@@ -413,9 +432,24 @@ function Result({
     router.push("/");
   }
 
+  /** How this plate is logged, for the log and for test sessions. */
+  function logOpts() {
+    const suggestedPortion = picked
+      ? undefined
+      : ownPhoto
+        ? recipe?.usualPortion
+        : result?.portionServings;
+    return {
+      photoColor: plate.photo.color,
+      via: ownPhoto ? ("portion-helper" as const) : ("plate-photo" as const),
+      suggestedPortion,
+      acceptedEstimate: !picked && portion === suggestedPortion,
+    };
+  }
+
   function logIt() {
     if (!recipe) return;
-    const log = actions.logRecipe(recipe.id, portion, { photoColor: plate.photo.color });
+    const log = actions.logRecipe(recipe.id, portion, logOpts());
     if (log) finish(`Nice, that’s logged · ${formatNumber(log.kcal)} kcal`, log.id);
   }
 
@@ -446,7 +480,7 @@ function Result({
   function choose(r: Recipe) {
     setRecipe(r);
     setPicked(true);
-    setPortion(r.usualPortion);
+    setPortionState(r.usualPortion);
     setMode("main");
   }
 
@@ -478,17 +512,17 @@ function Result({
   }
 
   if (mode === "new" || !recipe) {
-    // The scripted sample photo before T1: suggest importing the stir-fry.
+    // The scripted sample photo before T1: suggest importing the air-fryer chicken.
     if (result?.roughGuess) {
       const roughGuess = result.roughGuess;
       return (
         <Panel>
           {result.suggestImport ? (
             <>
-              <h1 className="text-title">Looks like garlic chicken stir-fry</h1>
+              <h1 className="text-title">Looks like {DEMO_RECIPE_NAME.toLowerCase()}</h1>
               <p className="text-body mt-1 text-ink-2">
-                It isn&rsquo;t in your recipes yet. Import it once, and Ladle can measure your
-                share from the recipe.
+                It isn&rsquo;t in your recipes yet. Import it once, and Ladle can measure your share
+                from the recipe.
               </p>
             </>
           ) : (
@@ -536,7 +570,12 @@ function Result({
     );
   }
 
-  const kcal = kcalFor(recipe, portion);
+  // From a batch, a serving is the batch's share of the pot.
+  const batch = activeBatch(data, recipe.id);
+  const perServing = batch
+    ? recipeTotalKcal(recipe) / batch.servingsMade
+    : exactKcalPerServing(recipe);
+  const kcal = logKcal(recipe, portion, batch);
   return (
     <Panel>
       <div className="flex items-center gap-3">
@@ -583,14 +622,30 @@ function Result({
         </button>
       </div>
 
-      <p className="text-headline mt-3">
-        {picked || !result
-          ? "How much did you have?"
-          : `${unsure ? "About" : "Looks like about"} ${formatPortion(result.portionServings)}`}
-      </p>
-      {!picked && result && <p className="text-caption text-ink-2">{result.portionReason}</p>}
+      {ownPhoto ? (
+        <div className="mt-4">
+          <PortionHelper
+            photo={plate.photo}
+            value={portion}
+            onChange={setPortion}
+            servings={batch ? batch.servingsMade : recipe.servings}
+            servingsLeft={batch ? batch.servingsLeft : undefined}
+            usualPortion={recipe.usualPortion}
+            kcalFor={(p) => logKcal(recipe, p, batch)}
+          />
+        </div>
+      ) : (
+        <>
+          <p className="text-headline mt-3">
+            {picked || !result
+              ? "How much did you have?"
+              : `${unsure ? "About" : "Looks like about"} ${formatPortion(result.portionServings)}`}
+          </p>
+          {!picked && result && <p className="text-caption text-ink-2">{result.portionReason}</p>}
+        </>
+      )}
       <div className="mt-2">
-        <PortionPicker value={portion} onChange={setPortion} kcalPerServing={kcalFor(recipe, 1)} />
+        <PortionPicker value={portion} onChange={setPortion} kcalPerServing={perServing} />
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-3">
@@ -619,7 +674,7 @@ function Result({
         baseKcal={kcal}
         onApply={(option, scope) => {
           // Log the meal, then apply the fix to that log.
-          const log = actions.logRecipe(recipe.id, portion, { photoColor: plate.photo.color });
+          const log = actions.logRecipe(recipe.id, portion, logOpts());
           if (!log) return null;
           loggedId.current = log.id;
           return actions.applyFix({ option, scope, logId: log.id });
@@ -654,10 +709,10 @@ function summary(r: Recipe): RecipeSummary {
 
 function PlateFlow({ data }: { data: AppData }) {
   const router = useRouter();
-  const { recipes, fixes } = data;
+  const { recipes } = data;
   const [plate, setPlate] = useState<PendingPlate | null>(() => {
     const saved = getPlate();
-    // A saved photo waiting for the stir-fry import: analyze again now the recipe may exist.
+    // A saved photo waiting for the demo recipe import: analyze again now the recipe may exist.
     if (saved?.status === "ready" && saved.result?.suggestImport) {
       return { ...saved, status: "analyzing", result: null };
     }
@@ -693,6 +748,8 @@ function PlateFlow({ data }: { data: AppData }) {
         })),
         photoColor: color,
         demoAsset: photo.isSample ? "sample-plate" : undefined,
+        // Test control "Treat today as Thursday": Maya's Thursday dinners rank first.
+        weekday: getTestFlags().treatAsThursday ? 4 : undefined,
       };
       const ai = await loadAI();
       const result = await ai.analyzePlate({
@@ -762,15 +819,19 @@ function PlateFlow({ data }: { data: AppData }) {
           </div>
         </Panel>
       )}
-      {plate.status === "ready" && (
-        <Result key={plate.id} plate={plate} recipes={recipes} fixes={fixes} />
-      )}
+      {plate.status === "ready" && <Result key={plate.id} plate={plate} data={data} />}
     </div>
   );
 }
 
 export default function CameraPage() {
   const state = useLadle();
-  if (!state) return <div className="h-full bg-[#14110e]" />;
-  return <PlateFlow data={state.data} />;
+  const blank = <div className="h-full bg-[#14110e]" />;
+  if (!state) return blank;
+  // Suspense: the page reads "?tour" from the address (Next.js needs a boundary for that).
+  return (
+    <Suspense fallback={blank}>
+      <PlateFlow data={state.data} />
+    </Suspense>
+  );
 }

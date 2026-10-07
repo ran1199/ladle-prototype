@@ -30,10 +30,19 @@ function Notice({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ImportSheet({
+  open,
+  onClose,
+  initialUrl = "",
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** Prefills the link box (the 60-second tour passes the demo link). */
+  initialUrl?: string;
+}) {
   const router = useRouter();
   const [method, setMethod] = useState<Method>("link");
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(initialUrl);
   const [text, setText] = useState("");
   const [savedLink, setSavedLink] = useState<string | null>(null);
   const [notice, setNotice] = useState<React.ReactNode>(null);
@@ -47,7 +56,7 @@ export function ImportSheet({ open, onClose }: { open: boolean; onClose: () => v
     setWasOpen(open);
     if (open) {
       setMethod("link");
-      setUrl("");
+      setUrl(initialUrl);
       setText("");
       setSavedLink(null);
       setNotice(null);

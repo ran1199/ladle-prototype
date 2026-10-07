@@ -284,8 +284,11 @@ export function applyToRecipe(recipe: Recipe, option: FixOption): Recipe {
 
 export type Suggestion = { kind: FixKind; detail: string; text: string };
 
-const SUGGESTION_TEXT: Record<FixKind, (detail: string) => string> = {
-  "more-oil": () => "You usually add more oil to this. Update your recipe?",
+const SUGGESTION_TEXT: Record<FixKind, (detail: string, recipe: Recipe) => string> = {
+  "more-oil": (_, recipe) =>
+    /brush/i.test(oilIngredient(recipe)?.ing.text ?? "")
+      ? "You usually brush on more oil. Update your recipe?"
+      : "You usually add more oil to this. Update your recipe?",
   "less-oil": () => "You usually use less oil in this. Update your recipe?",
   halved: () => "You usually cook a half batch of this. Update your recipe?",
   swapped: (d) => `You usually use ${d.split(">")[1]} in this. Update your recipe?`,
@@ -311,7 +314,7 @@ export function pendingSuggestion(recipe: Recipe, fixes: Fix[]): Suggestion | nu
   for (const [id, n] of counts) {
     if (n >= 2) {
       const [kind, detail] = id.split("|") as [FixKind, string];
-      return { kind, detail, text: SUGGESTION_TEXT[kind](detail) };
+      return { kind, detail, text: SUGGESTION_TEXT[kind](detail, recipe) };
     }
   }
   return null;

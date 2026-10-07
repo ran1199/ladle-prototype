@@ -227,14 +227,14 @@ export function buildSeed(now: Date = new Date()): AppData {
         servingsLeft: 4,
       },
     ],
-    // One earlier "Just this time: more oil" fix on the garlic chicken stir-fry (task T3).
+    // One earlier "Just this time: more oil" fix on the air-fryer garlic chicken (task T3).
     // It applies once that recipe is imported, so a second identical fix triggers the
-    // "You usually add more oil to this" suggestion.
+    // "You usually brush on more oil" suggestion.
     fixes: [
       {
         id: "seed-fix-oil",
         at: daysAgo(now, 4, 19, 30),
-        recipeKey: "garlic-chicken-stir-fry",
+        recipeKey: "air-fryer-garlic-chicken",
         kind: "more-oil",
         detail: "+1 tbsp",
         scope: "once",
