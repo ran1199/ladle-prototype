@@ -24,8 +24,10 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, "../../video-output");
 const VOICE = resolve(OUT, "voice");
 const RATE = 48000;
-const PRE = 0.3; // air kept before the first word
-const POST = 0.45; // and after the last
+const PRE = 0.45; // air kept before the first word
+const POST = 0.6; // and after the last
+/** The room-tone bed's level, matched to the background in the cleaned takes (about −50 dB). */
+const ROOM_DB = -51;
 
 const ff = (args) => execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", ...args], { stdio: "inherit" });
 const duration = (f) => Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", f], { encoding: "utf8" }).trim());
@@ -49,9 +51,12 @@ function cleanTake(scene) {
   const m = loudnormJson(take, pre);
   const norm = `loudnorm=I=-16:TP=-1.5:LRA=9:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true`;
   const out = resolve(VOICE, `scene-${scene.n}-voice.wav`);
+  // Fades only over the air around the speech, never over a word (a take may end right on its last word).
+  const fadeIn = Math.max(0.03, Math.min(0.3, v.speechStart - from - 0.08));
+  const fadeOut = Math.max(0.03, Math.min(0.4, to - v.speechEnd - 0.08));
   ff([
     "-i", take,
-    "-af", `${pre},${norm},aresample=${RATE},afade=t=in:d=0.12,afade=t=out:st=${(len - 0.3).toFixed(3)}:d=0.3,pan=stereo|c0=c0|c1=c0`,
+    "-af", `${pre},${norm},aresample=${RATE},afade=t=in:d=${fadeIn.toFixed(3)},afade=t=out:st=${(len - fadeOut).toFixed(3)}:d=${fadeOut.toFixed(3)},pan=stereo|c0=c0|c1=c0`,
     "-ar", String(RATE), "-c:a", "pcm_s16le", out,
   ]);
   // Where it starts in its scene: the first word at VOICE_LEAD.
@@ -67,8 +72,17 @@ for (const c of clips) {
   console.log(`scene ${c.scene.n}: ${c.len.toFixed(1)} s of voice at ${(starts[SCENES.indexOf(c.scene)] + c.offset).toFixed(2)} s (take was ${c.loudness} LUFS)`);
 }
 
+// Room tone: soft pink noise, shaped like a quiet room and calibrated to ROOM_DB.
+const ROOM_SHAPE = `highpass=f=100,lowpass=f=5000,pan=stereo|c0=c0|c1=c0`;
+const rms = (src) =>
+  Number(
+    execFileSync("sh", ["-c", `ffmpeg -hide_banner -nostats -f lavfi -t 6 -i "$0" -af "$1,astats=measure_overall=RMS_level" -f null - 2>&1 | grep "RMS level dB" | tail -1 | awk '{print $NF}'`, src, ROOM_SHAPE], { encoding: "utf8" }).trim(),
+  );
+const probe = rms(`anoisesrc=color=pink:amplitude=0.01:sample_rate=${RATE}:seed=7`);
+const amplitude = 0.01 * Math.pow(10, (ROOM_DB - probe) / 20);
+
 // The full voice track: room tone, plus every take at its place, then a safety limiter.
-const inputs = ["-f", "lavfi", "-t", String(total), "-i", `anoisesrc=color=brown:amplitude=0.0012:sample_rate=${RATE}:seed=7,lowpass=f=900,highpass=f=60,pan=stereo|c0=c0|c1=c0`];
+const inputs = ["-f", "lavfi", "-t", String(total), "-i", `anoisesrc=color=pink:amplitude=${amplitude.toFixed(6)}:sample_rate=${RATE}:seed=7,${ROOM_SHAPE}`];
 let filter = "";
 clips.forEach((c, i) => {
   const at = Math.round((starts[SCENES.indexOf(c.scene)] + c.offset) * 1000);
