@@ -4,7 +4,7 @@ import json, re, sys, wave
 from pocketsphinx import Decoder
 
 NARR, WAVDIR, OUT = sys.argv[1], sys.argv[2], sys.argv[3]
-TAKES = {1: 7, 2: 8, 3: 9, 4: 12, 6: 11, 7: 14, 8: 13, 9: 15}
+TAKES = {1: 7, 2: 8, 3: 9, 4: 12, 5: 16, 6: 11, 7: 14, 8: 13, 9: 15}
 NUMBERS = {
     "870": "eight hundred and seventy", "240": "two hundred and forty", "533": "five hundred thirty three",
     "530": "five hundred thirty", "120": "a hundred and twenty", "30": "thirty", "200": "two hundred",
