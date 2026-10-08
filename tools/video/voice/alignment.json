@@ -1,0 +1,2140 @@
+{
+ "1": {
+  "take": "julian-7",
+  "ok": true,
+  "words": [
+   {
+    "text": "Calorie",
+    "start": 0.8,
+    "end": 1.43
+   },
+   {
+    "text": "apps",
+    "start": 1.43,
+    "end": 1.72
+   },
+   {
+    "text": "aren't",
+    "start": 1.72,
+    "end": 2.2
+   },
+   {
+    "text": "built",
+    "start": 2.2,
+    "end": 2.49
+   },
+   {
+    "text": "for",
+    "start": 2.49,
+    "end": 2.7
+   },
+   {
+    "text": "home",
+    "start": 2.7,
+    "end": 3.06
+   },
+   {
+    "text": "cooks.",
+    "start": 3.06,
+    "end": 3.57
+   },
+   {
+    "text": "Photo",
+    "start": 4.1,
+    "end": 4.51
+   },
+   {
+    "text": "trackers",
+    "start": 4.51,
+    "end": 5.13
+   },
+   {
+    "text": "like",
+    "start": 5.13,
+    "end": 5.38
+   },
+   {
+    "text": "Cal",
+    "start": 5.38,
+    "end": 5.68
+   },
+   {
+    "text": "AI",
+    "start": 5.68,
+    "end": 6.08
+   },
+   {
+    "text": "can't",
+    "start": 6.08,
+    "end": 6.44
+   },
+   {
+    "text": "see",
+    "start": 6.44,
+    "end": 6.71
+   },
+   {
+    "text": "the",
+    "start": 6.71,
+    "end": 6.88
+   },
+   {
+    "text": "oil",
+    "start": 6.88,
+    "end": 7.24
+   },
+   {
+    "text": "in",
+    "start": 7.24,
+    "end": 7.32
+   },
+   {
+    "text": "your",
+    "start": 7.32,
+    "end": 7.56
+   },
+   {
+    "text": "pan.",
+    "start": 7.56,
+    "end": 8.04
+   },
+   {
+    "text": "Database",
+    "start": 8.85,
+    "end": 9.6
+   },
+   {
+    "text": "apps",
+    "start": 9.6,
+    "end": 10.04
+   },
+   {
+    "text": "like",
+    "start": 10.04,
+    "end": 10.37
+   },
+   {
+    "text": "MyFitnessPal",
+    "start": 10.37,
+    "end": 11.52
+   },
+   {
+    "text": "make",
+    "start": 11.87,
+    "end": 12.12
+   },
+   {
+    "text": "you",
+    "start": 12.12,
+    "end": 12.33
+   },
+   {
+    "text": "type",
+    "start": 12.33,
+    "end": 12.65
+   },
+   {
+    "text": "in",
+    "start": 12.65,
+    "end": 12.84
+   },
+   {
+    "text": "every",
+    "start": 12.84,
+    "end": 13.19
+   },
+   {
+    "text": "ingredient.",
+    "start": 13.19,
+    "end": 14.01
+   },
+   {
+    "text": "Across",
+    "start": 14.64,
+    "end": 15.2
+   },
+   {
+    "text": "nearly",
+    "start": 15.2,
+    "end": 15.59
+   },
+   {
+    "text": "200",
+    "start": 15.59,
+    "end": 16.18
+   },
+   {
+    "text": "reviews",
+    "start": 16.18,
+    "end": 16.76
+   },
+   {
+    "text": "and",
+    "start": 16.76,
+    "end": 17.0
+   },
+   {
+    "text": "forum",
+    "start": 17.0,
+    "end": 17.42
+   },
+   {
+    "text": "posts,",
+    "start": 17.42,
+    "end": 18.13
+   },
+   {
+    "text": "home",
+    "start": 18.41,
+    "end": 18.72
+   },
+   {
+    "text": "cooks",
+    "start": 18.72,
+    "end": 19.16
+   },
+   {
+    "text": "said",
+    "start": 19.16,
+    "end": 19.47
+   },
+   {
+    "text": "the",
+    "start": 19.47,
+    "end": 19.57
+   },
+   {
+    "text": "same",
+    "start": 19.57,
+    "end": 19.87
+   },
+   {
+    "text": "thing:",
+    "start": 19.87,
+    "end": 20.28
+   },
+   {
+    "text": "logging",
+    "start": 21.02,
+    "end": 21.47
+   },
+   {
+    "text": "their",
+    "start": 21.47,
+    "end": 21.72
+   },
+   {
+    "text": "own",
+    "start": 21.72,
+    "end": 21.97
+   },
+   {
+    "text": "food",
+    "start": 21.97,
+    "end": 22.32
+   },
+   {
+    "text": "took",
+    "start": 22.32,
+    "end": 22.6
+   },
+   {
+    "text": "longer",
+    "start": 22.6,
+    "end": 23.0
+   },
+   {
+    "text": "than",
+    "start": 23.0,
+    "end": 23.23
+   },
+   {
+    "text": "cooking",
+    "start": 23.23,
+    "end": 23.64
+   },
+   {
+    "text": "it,",
+    "start": 23.64,
+    "end": 23.99
+   },
+   {
+    "text": "so",
+    "start": 24.38,
+    "end": 24.88
+   },
+   {
+    "text": "they",
+    "start": 24.88,
+    "end": 25.05
+   },
+   {
+    "text": "quit.",
+    "start": 25.05,
+    "end": 25.58
+   },
+   {
+    "text": "Ladle",
+    "start": 27.08,
+    "end": 27.48
+   },
+   {
+    "text": "is",
+    "start": 27.48,
+    "end": 27.71
+   },
+   {
+    "text": "built",
+    "start": 27.71,
+    "end": 28.03
+   },
+   {
+    "text": "around",
+    "start": 28.03,
+    "end": 28.36
+   },
+   {
+    "text": "one",
+    "start": 28.36,
+    "end": 28.65
+   },
+   {
+    "text": "idea:",
+    "start": 28.65,
+    "end": 29.26
+   },
+   {
+    "text": "the",
+    "start": 29.78,
+    "end": 29.91
+   },
+   {
+    "text": "recipe",
+    "start": 29.91,
+    "end": 30.5
+   },
+   {
+    "text": "knows",
+    "start": 30.5,
+    "end": 30.97
+   },
+   {
+    "text": "the",
+    "start": 31.11,
+    "end": 31.32
+   },
+   {
+    "text": "ingredients;",
+    "start": 31.32,
+    "end": 32.2
+   },
+   {
+    "text": "the",
+    "start": 32.89,
+    "end": 33.0
+   },
+   {
+    "text": "photo",
+    "start": 33.0,
+    "end": 33.4
+   },
+   {
+    "text": "only",
+    "start": 33.4,
+    "end": 33.79
+   },
+   {
+    "text": "measures",
+    "start": 33.79,
+    "end": 34.55
+   },
+   {
+    "text": "your",
+    "start": 34.55,
+    "end": 34.79
+   },
+   {
+    "text": "share.",
+    "start": 34.79,
+    "end": 35.37
+   }
+  ]
+ },
+ "2": {
+  "take": "julian-8",
+  "ok": true,
+  "words": [
+   {
+    "text": "Meet",
+    "start": 1.05,
+    "end": 1.4
+   },
+   {
+    "text": "Maya,",
+    "start": 1.4,
+    "end": 1.92
+   },
+   {
+    "text": "a",
+    "start": 2.27,
+    "end": 2.36
+   },
+   {
+    "text": "home",
+    "start": 2.36,
+    "end": 2.7
+   },
+   {
+    "text": "cook",
+    "start": 2.7,
+    "end": 3.07
+   },
+   {
+    "text": "who",
+    "start": 3.07,
+    "end": 3.29
+   },
+   {
+    "text": "has",
+    "start": 3.29,
+    "end": 3.51
+   },
+   {
+    "text": "quit",
+    "start": 3.51,
+    "end": 3.84
+   },
+   {
+    "text": "tracking",
+    "start": 3.84,
+    "end": 4.36
+   },
+   {
+    "text": "twice.",
+    "start": 4.36,
+    "end": 4.92
+   },
+   {
+    "text": "Today",
+    "start": 5.27,
+    "end": 5.81
+   },
+   {
+    "text": "she",
+    "start": 5.81,
+    "end": 6.02
+   },
+   {
+    "text": "has",
+    "start": 6.02,
+    "end": 6.34
+   },
+   {
+    "text": "870",
+    "start": 6.34,
+    "end": 7.87
+   },
+   {
+    "text": "calories",
+    "start": 7.87,
+    "end": 8.62
+   },
+   {
+    "text": "left,",
+    "start": 8.62,
+    "end": 9.06
+   },
+   {
+    "text": "and",
+    "start": 9.55,
+    "end": 9.74
+   },
+   {
+    "text": "every",
+    "start": 9.74,
+    "end": 9.96
+   },
+   {
+    "text": "number",
+    "start": 9.96,
+    "end": 10.42
+   },
+   {
+    "text": "shows",
+    "start": 10.42,
+    "end": 10.87
+   },
+   {
+    "text": "how",
+    "start": 10.87,
+    "end": 11.11
+   },
+   {
+    "text": "sure",
+    "start": 11.11,
+    "end": 11.48
+   },
+   {
+    "text": "Ladle",
+    "start": 11.48,
+    "end": 11.88
+   },
+   {
+    "text": "is.",
+    "start": 11.88,
+    "end": 12.32
+   },
+   {
+    "text": "In",
+    "start": 12.74,
+    "end": 12.94
+   },
+   {
+    "text": "this",
+    "start": 12.94,
+    "end": 13.17
+   },
+   {
+    "text": "prototype,",
+    "start": 13.17,
+    "end": 14.19
+   },
+   {
+    "text": "the",
+    "start": 14.19,
+    "end": 14.5
+   },
+   {
+    "text": "AI",
+    "start": 14.5,
+    "end": 14.85
+   },
+   {
+    "text": "is",
+    "start": 14.85,
+    "end": 15.17
+   },
+   {
+    "text": "simulated,",
+    "start": 15.17,
+    "end": 16.09
+   },
+   {
+    "text": "so",
+    "start": 16.53,
+    "end": 16.92
+   },
+   {
+    "text": "we",
+    "start": 16.92,
+    "end": 17.06
+   },
+   {
+    "text": "can",
+    "start": 17.06,
+    "end": 17.26
+   },
+   {
+    "text": "test",
+    "start": 17.26,
+    "end": 17.68
+   },
+   {
+    "text": "the",
+    "start": 17.68,
+    "end": 17.89
+   },
+   {
+    "text": "experience",
+    "start": 17.89,
+    "end": 18.62
+   },
+   {
+    "text": "first.",
+    "start": 18.62,
+    "end": 19.56
+   }
+  ]
+ },
+ "3": {
+  "take": "julian-9",
+  "ok": true,
+  "words": [
+   {
+    "text": "That",
+    "start": 1.01,
+    "end": 1.34
+   },
+   {
+    "text": "afternoon,",
+    "start": 1.34,
+    "end": 2.17
+   },
+   {
+    "text": "she",
+    "start": 2.17,
+    "end": 2.46
+   },
+   {
+    "text": "grabs",
+    "start": 2.46,
+    "end": 2.86
+   },
+   {
+    "text": "a",
+    "start": 2.86,
+    "end": 2.91
+   },
+   {
+    "text": "matcha",
+    "start": 2.91,
+    "end": 3.28
+   },
+   {
+    "text": "latte.",
+    "start": 3.28,
+    "end": 3.79
+   },
+   {
+    "text": "For",
+    "start": 4.25,
+    "end": 4.47
+   },
+   {
+    "text": "food",
+    "start": 4.47,
+    "end": 4.85
+   },
+   {
+    "text": "she",
+    "start": 4.85,
+    "end": 5.13
+   },
+   {
+    "text": "didn't",
+    "start": 5.13,
+    "end": 5.48
+   },
+   {
+    "text": "cook,",
+    "start": 5.48,
+    "end": 6.43
+   },
+   {
+    "text": "Ladle",
+    "start": 6.43,
+    "end": 6.79
+   },
+   {
+    "text": "has",
+    "start": 6.79,
+    "end": 7.13
+   },
+   {
+    "text": "barcode",
+    "start": 7.13,
+    "end": 7.65
+   },
+   {
+    "text": "scanning,",
+    "start": 7.65,
+    "end": 8.28
+   },
+   {
+    "text": "search,",
+    "start": 8.81,
+    "end": 9.47
+   },
+   {
+    "text": "and",
+    "start": 10.03,
+    "end": 10.28
+   },
+   {
+    "text": "restaurant",
+    "start": 10.28,
+    "end": 10.82
+   },
+   {
+    "text": "estimates.",
+    "start": 10.82,
+    "end": 11.71
+   },
+   {
+    "text": "She",
+    "start": 12.19,
+    "end": 12.46
+   },
+   {
+    "text": "searches,",
+    "start": 12.46,
+    "end": 13.16
+   },
+   {
+    "text": "taps,",
+    "start": 13.49,
+    "end": 14.15
+   },
+   {
+    "text": "and",
+    "start": 14.44,
+    "end": 14.65
+   },
+   {
+    "text": "it's",
+    "start": 14.65,
+    "end": 14.87
+   },
+   {
+    "text": "logged:",
+    "start": 14.87,
+    "end": 15.8
+   },
+   {
+    "text": "about",
+    "start": 15.8,
+    "end": 16.17
+   },
+   {
+    "text": "240",
+    "start": 16.17,
+    "end": 17.39
+   },
+   {
+    "text": "calories,",
+    "start": 17.39,
+    "end": 18.2
+   },
+   {
+    "text": "marked",
+    "start": 18.74,
+    "end": 19.33
+   },
+   {
+    "text": "as",
+    "start": 19.33,
+    "end": 19.55
+   },
+   {
+    "text": "a",
+    "start": 19.55,
+    "end": 19.65
+   },
+   {
+    "text": "good",
+    "start": 19.65,
+    "end": 19.99
+   },
+   {
+    "text": "estimate.",
+    "start": 19.99,
+    "end": 20.84
+   }
+  ]
+ },
+ "4": {
+  "take": "julian-12",
+  "ok": true,
+  "words": [
+   {
+    "text": "Tonight,",
+    "start": 1.18,
+    "end": 1.86
+   },
+   {
+    "text": "she",
+    "start": 1.86,
+    "end": 2.15
+   },
+   {
+    "text": "found",
+    "start": 2.15,
+    "end": 2.48
+   },
+   {
+    "text": "an",
+    "start": 2.48,
+    "end": 2.98
+   },
+   {
+    "text": "air-fryer",
+    "start": 2.98,
+    "end": 3.75
+   },
+   {
+    "text": "garlic",
+    "start": 3.75,
+    "end": 4.25
+   },
+   {
+    "text": "chicken",
+    "start": 4.25,
+    "end": 4.64
+   },
+   {
+    "text": "video.",
+    "start": 4.64,
+    "end": 5.07
+   },
+   {
+    "text": "She",
+    "start": 5.69,
+    "end": 5.89
+   },
+   {
+    "text": "pastes",
+    "start": 5.89,
+    "end": 6.44
+   },
+   {
+    "text": "the",
+    "start": 6.44,
+    "end": 6.51
+   },
+   {
+    "text": "link,",
+    "start": 6.51,
+    "end": 7.1
+   },
+   {
+    "text": "and",
+    "start": 7.47,
+    "end": 7.73
+   },
+   {
+    "text": "Ladle",
+    "start": 7.73,
+    "end": 8.16
+   },
+   {
+    "text": "reads",
+    "start": 8.16,
+    "end": 8.59
+   },
+   {
+    "text": "the",
+    "start": 8.59,
+    "end": 8.7
+   },
+   {
+    "text": "recipe",
+    "start": 8.7,
+    "end": 9.24
+   },
+   {
+    "text": "from",
+    "start": 9.24,
+    "end": 9.52
+   },
+   {
+    "text": "the",
+    "start": 9.52,
+    "end": 9.6
+   },
+   {
+    "text": "caption:",
+    "start": 9.6,
+    "end": 10.21
+   },
+   {
+    "text": "every",
+    "start": 10.93,
+    "end": 11.22
+   },
+   {
+    "text": "ingredient,",
+    "start": 11.22,
+    "end": 12.33
+   },
+   {
+    "text": "with",
+    "start": 12.33,
+    "end": 12.6
+   },
+   {
+    "text": "its",
+    "start": 12.6,
+    "end": 12.75
+   },
+   {
+    "text": "calories.",
+    "start": 12.75,
+    "end": 13.53
+   },
+   {
+    "text": "But",
+    "start": 14.22,
+    "end": 14.49
+   },
+   {
+    "text": "one",
+    "start": 14.49,
+    "end": 14.67
+   },
+   {
+    "text": "line",
+    "start": 14.67,
+    "end": 14.95
+   },
+   {
+    "text": "just",
+    "start": 14.95,
+    "end": 15.19
+   },
+   {
+    "text": "says",
+    "start": 15.19,
+    "end": 15.68
+   },
+   {
+    "text": "\"olive",
+    "start": 15.89,
+    "end": 16.31
+   },
+   {
+    "text": "oil",
+    "start": 16.31,
+    "end": 16.67
+   },
+   {
+    "text": "for",
+    "start": 16.67,
+    "end": 16.88
+   },
+   {
+    "text": "brushing.\"",
+    "start": 16.88,
+    "end": 17.67
+   },
+   {
+    "text": "A",
+    "start": 18.09,
+    "end": 18.16
+   },
+   {
+    "text": "photo",
+    "start": 18.16,
+    "end": 18.52
+   },
+   {
+    "text": "would",
+    "start": 18.52,
+    "end": 18.74
+   },
+   {
+    "text": "never",
+    "start": 18.74,
+    "end": 19.05
+   },
+   {
+    "text": "catch",
+    "start": 19.05,
+    "end": 19.42
+   },
+   {
+    "text": "that,",
+    "start": 19.42,
+    "end": 20.12
+   },
+   {
+    "text": "so",
+    "start": 20.12,
+    "end": 20.51
+   },
+   {
+    "text": "Ladle",
+    "start": 20.51,
+    "end": 20.9
+   },
+   {
+    "text": "asks",
+    "start": 20.9,
+    "end": 21.29
+   },
+   {
+    "text": "how",
+    "start": 21.29,
+    "end": 21.49
+   },
+   {
+    "text": "much",
+    "start": 21.49,
+    "end": 21.82
+   },
+   {
+    "text": "she",
+    "start": 21.82,
+    "end": 22.12
+   },
+   {
+    "text": "brushed",
+    "start": 22.12,
+    "end": 22.54
+   },
+   {
+    "text": "on,",
+    "start": 22.54,
+    "end": 23.0
+   },
+   {
+    "text": "and",
+    "start": 23.47,
+    "end": 23.73
+   },
+   {
+    "text": "each",
+    "start": 23.73,
+    "end": 24.01
+   },
+   {
+    "text": "choice",
+    "start": 24.01,
+    "end": 24.44
+   },
+   {
+    "text": "shows",
+    "start": 24.44,
+    "end": 24.87
+   },
+   {
+    "text": "what",
+    "start": 24.87,
+    "end": 25.16
+   },
+   {
+    "text": "it",
+    "start": 25.16,
+    "end": 25.36
+   },
+   {
+    "text": "adds.",
+    "start": 25.36,
+    "end": 25.89
+   },
+   {
+    "text": "Maya",
+    "start": 26.46,
+    "end": 26.82
+   },
+   {
+    "text": "picks",
+    "start": 26.82,
+    "end": 27.38
+   },
+   {
+    "text": "two",
+    "start": 27.66,
+    "end": 28.0
+   },
+   {
+    "text": "tablespoons:",
+    "start": 28.0,
+    "end": 28.99
+   },
+   {
+    "text": "533",
+    "start": 29.4,
+    "end": 31.32
+   },
+   {
+    "text": "calories",
+    "start": 31.32,
+    "end": 32.03
+   },
+   {
+    "text": "a",
+    "start": 32.03,
+    "end": 32.12
+   },
+   {
+    "text": "serving.",
+    "start": 32.12,
+    "end": 32.71
+   },
+   {
+    "text": "She",
+    "start": 33.13,
+    "end": 33.39
+   },
+   {
+    "text": "saves",
+    "start": 33.39,
+    "end": 33.9
+   },
+   {
+    "text": "it",
+    "start": 33.9,
+    "end": 34.15
+   },
+   {
+    "text": "once,",
+    "start": 34.15,
+    "end": 34.68
+   },
+   {
+    "text": "and",
+    "start": 34.92,
+    "end": 35.21
+   },
+   {
+    "text": "never",
+    "start": 35.21,
+    "end": 35.55
+   },
+   {
+    "text": "types",
+    "start": 35.55,
+    "end": 36.23
+   },
+   {
+    "text": "it",
+    "start": 36.23,
+    "end": 36.45
+   },
+   {
+    "text": "again.",
+    "start": 36.45,
+    "end": 36.9
+   }
+  ]
+ },
+ "6": {
+  "take": "julian-11",
+  "ok": true,
+  "words": [
+   {
+    "text": "Dinner's",
+    "start": 1.03,
+    "end": 1.47
+   },
+   {
+    "text": "ready,",
+    "start": 1.47,
+    "end": 2.18
+   },
+   {
+    "text": "so",
+    "start": 2.18,
+    "end": 2.37
+   },
+   {
+    "text": "Maya",
+    "start": 2.37,
+    "end": 2.79
+   },
+   {
+    "text": "snaps",
+    "start": 2.79,
+    "end": 3.27
+   },
+   {
+    "text": "her",
+    "start": 3.27,
+    "end": 3.48
+   },
+   {
+    "text": "plate.",
+    "start": 3.48,
+    "end": 4.06
+   },
+   {
+    "text": "Ladle",
+    "start": 4.74,
+    "end": 5.16
+   },
+   {
+    "text": "recognizes",
+    "start": 5.16,
+    "end": 5.81
+   },
+   {
+    "text": "the",
+    "start": 5.81,
+    "end": 5.91
+   },
+   {
+    "text": "dish,",
+    "start": 5.91,
+    "end": 6.42
+   },
+   {
+    "text": "and",
+    "start": 6.75,
+    "end": 6.97
+   },
+   {
+    "text": "because",
+    "start": 6.97,
+    "end": 7.36
+   },
+   {
+    "text": "it",
+    "start": 7.36,
+    "end": 7.59
+   },
+   {
+    "text": "already",
+    "start": 7.59,
+    "end": 7.99
+   },
+   {
+    "text": "knows",
+    "start": 7.99,
+    "end": 8.37
+   },
+   {
+    "text": "the",
+    "start": 8.37,
+    "end": 8.49
+   },
+   {
+    "text": "recipe,",
+    "start": 8.49,
+    "end": 9.13
+   },
+   {
+    "text": "the",
+    "start": 9.42,
+    "end": 9.63
+   },
+   {
+    "text": "photo",
+    "start": 9.63,
+    "end": 10.07
+   },
+   {
+    "text": "only",
+    "start": 10.07,
+    "end": 10.39
+   },
+   {
+    "text": "has",
+    "start": 10.39,
+    "end": 10.66
+   },
+   {
+    "text": "to",
+    "start": 10.66,
+    "end": 10.83
+   },
+   {
+    "text": "answer",
+    "start": 10.83,
+    "end": 11.2
+   },
+   {
+    "text": "one",
+    "start": 11.2,
+    "end": 11.51
+   },
+   {
+    "text": "question:",
+    "start": 11.51,
+    "end": 12.16
+   },
+   {
+    "text": "how",
+    "start": 12.58,
+    "end": 12.83
+   },
+   {
+    "text": "much",
+    "start": 12.83,
+    "end": 13.31
+   },
+   {
+    "text": "did",
+    "start": 13.31,
+    "end": 13.54
+   },
+   {
+    "text": "she",
+    "start": 13.54,
+    "end": 13.79
+   },
+   {
+    "text": "take?",
+    "start": 13.79,
+    "end": 14.25
+   },
+   {
+    "text": "The",
+    "start": 14.6,
+    "end": 14.97
+   },
+   {
+    "text": "pot",
+    "start": 14.97,
+    "end": 15.45
+   },
+   {
+    "text": "shows",
+    "start": 15.45,
+    "end": 15.84
+   },
+   {
+    "text": "her",
+    "start": 15.84,
+    "end": 16.05
+   },
+   {
+    "text": "share:",
+    "start": 16.05,
+    "end": 16.53
+   },
+   {
+    "text": "one",
+    "start": 17.02,
+    "end": 17.29
+   },
+   {
+    "text": "of",
+    "start": 17.29,
+    "end": 17.43
+   },
+   {
+    "text": "four",
+    "start": 17.43,
+    "end": 17.75
+   },
+   {
+    "text": "servings,",
+    "start": 17.75,
+    "end": 18.49
+   },
+   {
+    "text": "one",
+    "start": 19.16,
+    "end": 19.42
+   },
+   {
+    "text": "chicken",
+    "start": 19.42,
+    "end": 19.78
+   },
+   {
+    "text": "leg",
+    "start": 19.78,
+    "end": 20.17
+   },
+   {
+    "text": "with",
+    "start": 20.75,
+    "end": 21.23
+   },
+   {
+    "text": "vegetables.",
+    "start": 21.23,
+    "end": 22.05
+   },
+   {
+    "text": "If",
+    "start": 22.69,
+    "end": 22.9
+   },
+   {
+    "text": "she",
+    "start": 22.9,
+    "end": 23.13
+   },
+   {
+    "text": "took",
+    "start": 23.13,
+    "end": 23.41
+   },
+   {
+    "text": "more,",
+    "start": 23.41,
+    "end": 24.1
+   },
+   {
+    "text": "she",
+    "start": 24.1,
+    "end": 24.35
+   },
+   {
+    "text": "slides",
+    "start": 24.35,
+    "end": 24.83
+   },
+   {
+    "text": "it.",
+    "start": 24.83,
+    "end": 25.25
+   },
+   {
+    "text": "One",
+    "start": 25.97,
+    "end": 26.25
+   },
+   {
+    "text": "tap",
+    "start": 26.25,
+    "end": 26.72
+   },
+   {
+    "text": "logs",
+    "start": 26.72,
+    "end": 27.19
+   },
+   {
+    "text": "about",
+    "start": 27.6,
+    "end": 27.91
+   },
+   {
+    "text": "530",
+    "start": 27.91,
+    "end": 29.13
+   },
+   {
+    "text": "calories,",
+    "start": 29.13,
+    "end": 29.83
+   },
+   {
+    "text": "and",
+    "start": 30.32,
+    "end": 30.54
+   },
+   {
+    "text": "her",
+    "start": 30.54,
+    "end": 30.72
+   },
+   {
+    "text": "photo",
+    "start": 30.72,
+    "end": 31.14
+   },
+   {
+    "text": "becomes",
+    "start": 31.14,
+    "end": 31.73
+   },
+   {
+    "text": "the",
+    "start": 31.73,
+    "end": 31.85
+   },
+   {
+    "text": "recipe's",
+    "start": 31.85,
+    "end": 32.45
+   },
+   {
+    "text": "picture.",
+    "start": 32.45,
+    "end": 32.97
+   }
+  ]
+ },
+ "7": {
+  "take": "julian-14",
+  "ok": true,
+  "words": [
+   {
+    "text": "Of",
+    "start": 0.83,
+    "end": 1.01
+   },
+   {
+    "text": "course,",
+    "start": 1.01,
+    "end": 1.57
+   },
+   {
+    "text": "real",
+    "start": 1.57,
+    "end": 1.84
+   },
+   {
+    "text": "cooking",
+    "start": 1.84,
+    "end": 2.34
+   },
+   {
+    "text": "doesn't",
+    "start": 2.34,
+    "end": 2.79
+   },
+   {
+    "text": "follow",
+    "start": 2.79,
+    "end": 3.15
+   },
+   {
+    "text": "the",
+    "start": 3.15,
+    "end": 3.26
+   },
+   {
+    "text": "recipe.",
+    "start": 3.26,
+    "end": 3.85
+   },
+   {
+    "text": "Maya",
+    "start": 4.46,
+    "end": 4.85
+   },
+   {
+    "text": "brushed",
+    "start": 4.85,
+    "end": 5.37
+   },
+   {
+    "text": "on",
+    "start": 5.37,
+    "end": 5.67
+   },
+   {
+    "text": "extra",
+    "start": 5.67,
+    "end": 6.16
+   },
+   {
+    "text": "oil,",
+    "start": 6.16,
+    "end": 6.61
+   },
+   {
+    "text": "like",
+    "start": 7.13,
+    "end": 7.32
+   },
+   {
+    "text": "she",
+    "start": 7.32,
+    "end": 7.55
+   },
+   {
+    "text": "always",
+    "start": 7.55,
+    "end": 7.96
+   },
+   {
+    "text": "does.",
+    "start": 7.96,
+    "end": 8.42
+   },
+   {
+    "text": "She",
+    "start": 8.75,
+    "end": 9.08
+   },
+   {
+    "text": "taps",
+    "start": 9.08,
+    "end": 9.61
+   },
+   {
+    "text": "\"Today",
+    "start": 9.87,
+    "end": 10.18
+   },
+   {
+    "text": "was",
+    "start": 10.18,
+    "end": 10.46
+   },
+   {
+    "text": "different,\"",
+    "start": 10.46,
+    "end": 11.02
+   },
+   {
+    "text": "picks",
+    "start": 11.52,
+    "end": 12.17
+   },
+   {
+    "text": "\"More",
+    "start": 12.17,
+    "end": 12.45
+   },
+   {
+    "text": "oil,\"",
+    "start": 12.45,
+    "end": 12.86
+   },
+   {
+    "text": "and",
+    "start": 13.34,
+    "end": 13.57
+   },
+   {
+    "text": "sees",
+    "start": 13.57,
+    "end": 14.03
+   },
+   {
+    "text": "exactly",
+    "start": 14.03,
+    "end": 14.75
+   },
+   {
+    "text": "what",
+    "start": 14.75,
+    "end": 15.23
+   },
+   {
+    "text": "changes:",
+    "start": 15.23,
+    "end": 15.8
+   },
+   {
+    "text": "120",
+    "start": 16.75,
+    "end": 17.75
+   },
+   {
+    "text": "more",
+    "start": 17.75,
+    "end": 18.08
+   },
+   {
+    "text": "for",
+    "start": 18.08,
+    "end": 18.34
+   },
+   {
+    "text": "the",
+    "start": 18.34,
+    "end": 18.44
+   },
+   {
+    "text": "whole",
+    "start": 18.44,
+    "end": 18.75
+   },
+   {
+    "text": "pan,",
+    "start": 18.75,
+    "end": 19.15
+   },
+   {
+    "text": "30",
+    "start": 19.6,
+    "end": 19.95
+   },
+   {
+    "text": "more",
+    "start": 19.95,
+    "end": 20.37
+   },
+   {
+    "text": "on",
+    "start": 20.37,
+    "end": 20.6
+   },
+   {
+    "text": "her",
+    "start": 20.6,
+    "end": 20.82
+   },
+   {
+    "text": "plate.",
+    "start": 20.82,
+    "end": 21.39
+   },
+   {
+    "text": "She",
+    "start": 21.92,
+    "end": 22.18
+   },
+   {
+    "text": "chooses",
+    "start": 22.18,
+    "end": 22.87
+   },
+   {
+    "text": "\"Just",
+    "start": 23.28,
+    "end": 23.84
+   },
+   {
+    "text": "this",
+    "start": 23.84,
+    "end": 24.04
+   },
+   {
+    "text": "time.\"",
+    "start": 24.04,
+    "end": 24.48
+   },
+   {
+    "text": "But",
+    "start": 24.81,
+    "end": 25.11
+   },
+   {
+    "text": "Ladle",
+    "start": 25.11,
+    "end": 25.43
+   },
+   {
+    "text": "notices",
+    "start": 25.43,
+    "end": 26.13
+   },
+   {
+    "text": "it's",
+    "start": 26.31,
+    "end": 26.53
+   },
+   {
+    "text": "the",
+    "start": 26.53,
+    "end": 26.62
+   },
+   {
+    "text": "second",
+    "start": 26.62,
+    "end": 27.03
+   },
+   {
+    "text": "time,",
+    "start": 27.03,
+    "end": 27.37
+   },
+   {
+    "text": "and",
+    "start": 27.58,
+    "end": 27.82
+   },
+   {
+    "text": "asks:",
+    "start": 27.82,
+    "end": 28.29
+   },
+   {
+    "text": "\"You",
+    "start": 29.22,
+    "end": 29.63
+   },
+   {
+    "text": "usually",
+    "start": 29.63,
+    "end": 30.21
+   },
+   {
+    "text": "brush",
+    "start": 30.21,
+    "end": 30.53
+   },
+   {
+    "text": "on",
+    "start": 30.53,
+    "end": 30.75
+   },
+   {
+    "text": "more",
+    "start": 30.75,
+    "end": 31.07
+   },
+   {
+    "text": "oil.",
+    "start": 31.07,
+    "end": 31.46
+   },
+   {
+    "text": "Update",
+    "start": 31.88,
+    "end": 32.27
+   },
+   {
+    "text": "your",
+    "start": 32.27,
+    "end": 32.45
+   },
+   {
+    "text": "recipe?\"",
+    "start": 32.45,
+    "end": 33.08
+   },
+   {
+    "text": "One",
+    "start": 33.68,
+    "end": 33.95
+   },
+   {
+    "text": "tap,",
+    "start": 33.95,
+    "end": 34.47
+   },
+   {
+    "text": "and",
+    "start": 34.89,
+    "end": 35.1
+   },
+   {
+    "text": "Ladle",
+    "start": 35.1,
+    "end": 35.42
+   },
+   {
+    "text": "remembers.",
+    "start": 35.42,
+    "end": 36.29
+   }
+  ]
+ },
+ "8": {
+  "take": "julian-13",
+  "ok": true,
+  "words": [
+   {
+    "text": "The",
+    "start": 0.86,
+    "end": 0.99
+   },
+   {
+    "text": "next",
+    "start": 0.99,
+    "end": 1.34
+   },
+   {
+    "text": "day,",
+    "start": 1.34,
+    "end": 1.81
+   },
+   {
+    "text": "lunch",
+    "start": 1.81,
+    "end": 2.19
+   },
+   {
+    "text": "is",
+    "start": 2.19,
+    "end": 2.4
+   },
+   {
+    "text": "already",
+    "start": 2.4,
+    "end": 2.72
+   },
+   {
+    "text": "waiting.",
+    "start": 2.72,
+    "end": 3.2
+   },
+   {
+    "text": "Her",
+    "start": 3.65,
+    "end": 3.82
+   },
+   {
+    "text": "Pantry",
+    "start": 3.82,
+    "end": 4.36
+   },
+   {
+    "text": "shows",
+    "start": 4.36,
+    "end": 4.87
+   },
+   {
+    "text": "three",
+    "start": 4.87,
+    "end": 5.17
+   },
+   {
+    "text": "of",
+    "start": 5.17,
+    "end": 5.38
+   },
+   {
+    "text": "four",
+    "start": 5.38,
+    "end": 5.67
+   },
+   {
+    "text": "servings",
+    "start": 5.67,
+    "end": 6.31
+   },
+   {
+    "text": "left,",
+    "start": 6.31,
+    "end": 6.77
+   },
+   {
+    "text": "and",
+    "start": 7.15,
+    "end": 7.37
+   },
+   {
+    "text": "logging",
+    "start": 7.37,
+    "end": 7.85
+   },
+   {
+    "text": "one",
+    "start": 7.85,
+    "end": 8.17
+   },
+   {
+    "text": "is",
+    "start": 8.17,
+    "end": 8.4
+   },
+   {
+    "text": "a",
+    "start": 8.4,
+    "end": 8.46
+   },
+   {
+    "text": "single",
+    "start": 8.46,
+    "end": 8.93
+   },
+   {
+    "text": "tap.",
+    "start": 8.93,
+    "end": 9.37
+   },
+   {
+    "text": "No",
+    "start": 9.93,
+    "end": 10.11
+   },
+   {
+    "text": "photo,",
+    "start": 10.11,
+    "end": 10.68
+   },
+   {
+    "text": "no",
+    "start": 10.97,
+    "end": 11.15
+   },
+   {
+    "text": "typing.",
+    "start": 11.15,
+    "end": 11.75
+   }
+  ]
+ },
+ "9": {
+  "take": "julian-15",
+  "ok": true,
+  "words": [
+   {
+    "text": "That's",
+    "start": 0.89,
+    "end": 1.38
+   },
+   {
+    "text": "Ladle.",
+    "start": 1.38,
+    "end": 1.86
+   },
+   {
+    "text": "Teach",
+    "start": 2.29,
+    "end": 2.62
+   },
+   {
+    "text": "it",
+    "start": 2.62,
+    "end": 2.86
+   },
+   {
+    "text": "a",
+    "start": 2.86,
+    "end": 2.97
+   },
+   {
+    "text": "recipe",
+    "start": 2.97,
+    "end": 3.47
+   },
+   {
+    "text": "once,",
+    "start": 3.47,
+    "end": 4.21
+   },
+   {
+    "text": "snap",
+    "start": 4.21,
+    "end": 4.62
+   },
+   {
+    "text": "your",
+    "start": 4.62,
+    "end": 4.79
+   },
+   {
+    "text": "plate,",
+    "start": 4.79,
+    "end": 5.63
+   },
+   {
+    "text": "and",
+    "start": 5.63,
+    "end": 5.85
+   },
+   {
+    "text": "correct",
+    "start": 5.85,
+    "end": 6.37
+   },
+   {
+    "text": "it",
+    "start": 6.37,
+    "end": 6.63
+   },
+   {
+    "text": "when",
+    "start": 6.63,
+    "end": 6.89
+   },
+   {
+    "text": "real",
+    "start": 6.89,
+    "end": 7.15
+   },
+   {
+    "text": "life",
+    "start": 7.15,
+    "end": 7.47
+   },
+   {
+    "text": "gets",
+    "start": 7.47,
+    "end": 7.75
+   },
+   {
+    "text": "in",
+    "start": 7.75,
+    "end": 7.93
+   },
+   {
+    "text": "the",
+    "start": 7.93,
+    "end": 8.02
+   },
+   {
+    "text": "way.",
+    "start": 8.02,
+    "end": 8.37
+   },
+   {
+    "text": "Every",
+    "start": 9.19,
+    "end": 9.51
+   },
+   {
+    "text": "meal",
+    "start": 9.51,
+    "end": 9.89
+   },
+   {
+    "text": "Maya",
+    "start": 9.89,
+    "end": 10.41
+   },
+   {
+    "text": "repeats",
+    "start": 10.41,
+    "end": 11.2
+   },
+   {
+    "text": "gets",
+    "start": 11.2,
+    "end": 11.54
+   },
+   {
+    "text": "faster,",
+    "start": 11.54,
+    "end": 12.31
+   },
+   {
+    "text": "and",
+    "start": 12.8,
+    "end": 13.05
+   },
+   {
+    "text": "every",
+    "start": 13.05,
+    "end": 13.29
+   },
+   {
+    "text": "number",
+    "start": 13.29,
+    "end": 13.79
+   },
+   {
+    "text": "tells",
+    "start": 13.79,
+    "end": 14.34
+   },
+   {
+    "text": "her",
+    "start": 14.34,
+    "end": 14.55
+   },
+   {
+    "text": "how",
+    "start": 14.55,
+    "end": 14.82
+   },
+   {
+    "text": "much",
+    "start": 14.82,
+    "end": 15.26
+   },
+   {
+    "text": "to",
+    "start": 15.26,
+    "end": 15.43
+   },
+   {
+    "text": "trust",
+    "start": 15.43,
+    "end": 15.86
+   },
+   {
+    "text": "it.",
+    "start": 15.86,
+    "end": 16.23
+   },
+   {
+    "text": "Ladle:",
+    "start": 16.78,
+    "end": 17.28
+   },
+   {
+    "text": "the",
+    "start": 17.73,
+    "end": 17.84
+   },
+   {
+    "text": "recipe",
+    "start": 17.84,
+    "end": 18.3
+   },
+   {
+    "text": "knows;",
+    "start": 18.3,
+    "end": 18.88
+   },
+   {
+    "text": "the",
+    "start": 19.3,
+    "end": 19.41
+   },
+   {
+    "text": "photo",
+    "start": 19.41,
+    "end": 19.77
+   },
+   {
+    "text": "measures.",
+    "start": 19.77,
+    "end": 21.01
+   }
+  ]
+ }
+}

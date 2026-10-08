@@ -1,11 +1,13 @@
-// Subtitle timing at a normal speaking pace: 150 words a minute (0.4 s a word),
+// Subtitle timing. With a recorded voiceover, every word's time comes from the
+// recording (forced alignment); without one, a normal speaking pace is used:
+// 150 words a minute (0.4 s a word),
 // plus 0.25 s after commas, colons and semicolons and 0.5 s after a sentence.
 // Each scene's narration starts 0.8 s in. Every word gets a start time; cues
 // are built from those times at natural phrase breaks.
 //
 //   node tools/video/timing.mjs   → writes the SRT, ASS, voiceover guide and a report
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { SCENES, sceneStarts } from "./script.mjs";
 
 const WORD = 0.4;
@@ -25,8 +27,34 @@ const NO_BREAK_AFTER =
 const endsSentence = (w) => /[.?!]["”]?$/.test(w);
 const endsPhrase = (w) => /[,:;]["”]?$/.test(w);
 
-/** Word-by-word times for one scene (seconds from the scene's start). */
+/** Where the recorded voice starts in each scene (seconds), when there is a recording. */
+export const VOICE_LEAD = 0.7;
+
+// Ran's recorded voiceover, aligned word by word to the script (tools/video/voice/align.py).
+const ALIGNMENT_FILE = new URL("./voice/alignment.json", import.meta.url);
+const ALIGNMENT = existsSync(ALIGNMENT_FILE) ? JSON.parse(readFileSync(ALIGNMENT_FILE, "utf8")) : {};
+
+/** The recording for a scene: which take, and where its speech starts and ends in the take. */
+export function voiceFor(narration) {
+  const scene = SCENES.find((s) => s.narration === narration);
+  const a = scene && ALIGNMENT[scene.n];
+  if (!a?.ok) return null;
+  return { take: a.take, words: a.words, speechStart: a.words[0].start, speechEnd: a.words[a.words.length - 1].end };
+}
+
+/**
+ * Word-by-word times for one scene (seconds from the scene's start): from the
+ * recorded voice when there is one, otherwise at the normal speaking pace.
+ */
 export function wordTimes(narration) {
+  const voice = voiceFor(narration);
+  if (voice) {
+    return voice.words.map((w) => ({
+      text: w.text,
+      start: VOICE_LEAD + w.start - voice.speechStart,
+      end: VOICE_LEAD + w.end - voice.speechStart,
+    }));
+  }
   let t = LEAD_IN;
   return narration.split(/\s+/).map((text) => {
     const start = t;
@@ -201,7 +229,7 @@ export function report() {
   const rows = SCENES.map((s) => {
     const w = wordTimes(s.narration);
     const ends = w[w.length - 1].end;
-    return { scene: s.n, name: s.name, narration: +ends.toFixed(1), window: s.seconds, spare: +(s.seconds - ends).toFixed(1) };
+    return { scene: s.n, name: s.name, voice: voiceFor(s.narration)?.take ?? "none (estimated pace)", narration: +ends.toFixed(1), window: s.seconds, spare: +(s.seconds - ends).toFixed(1) };
   });
   const fastest = cues.reduce((a, c) => (c.cps > a.cps ? c : a));
   const longest = cues.reduce((a, c) => (c.end - c.start > a.end - a.start ? c : a));

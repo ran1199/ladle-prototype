@@ -5,27 +5,27 @@
 // 150 words a minute (plus pauses) doesn't fit. See WINDOWS_NOTE.
 
 export const WINDOWS_NOTE =
-  "Scenes 1, 2 and 9 were lengthened and 6, 7 and 8 shortened so every scene's narration fits; the total stays 4:00. Scene 6 says \"pot\" (Ran's OK): with the batch from scene 5 active, the app shows \"¼ of the pot\".";
+  "Windows fit Ran's recorded voiceover (tools/video/voice/alignment.json), 4:06 in all. Scene 6 says \"pot\" (Ran's OK): with the batch from scene 5 active, the app shows \"¼ of the pot\".";
 
 export const SCENES = [
   {
     n: 1,
     name: "Introduction",
-    seconds: 35, // script: 30
+    seconds: 37, // script: 30
     narration:
       "Calorie apps aren't built for home cooks. Photo trackers like Cal AI can't see the oil in your pan. Database apps like MyFitnessPal make you type in every ingredient. Across nearly 200 reviews and forum posts, home cooks said the same thing: logging their own food took longer than cooking it, so they quit. Ladle is built around one idea: the recipe knows the ingredients; the photo only measures your share.",
   },
   {
     n: 2,
     name: "Meet Maya",
-    seconds: 20, // script: 15
+    seconds: 21, // script: 15
     narration:
       "Meet Maya, a home cook who has quit tracking twice. Today she has 870 calories left, and every number shows how sure Ladle is. In this prototype, the AI is simulated, so we can test the experience first.",
   },
   {
     n: 3,
     name: "An afternoon latte",
-    seconds: 20,
+    seconds: 22, // script: 20
     narration:
       "That afternoon, she grabs a matcha latte. For food she didn't cook, Ladle has barcode scanning, search, and restaurant estimates. She searches, taps, and it's logged: about 240 calories, marked as a good estimate.",
     caption: { text: "Barcode · Search · Restaurant", at: "barcode scanning" },
@@ -56,7 +56,7 @@ export const SCENES = [
   {
     n: 7,
     name: "Fix and learn",
-    seconds: 37, // script: 40
+    seconds: 38, // script: 40
     narration:
       "Of course, real cooking doesn't follow the recipe. Maya brushed on extra oil, like she always does. She taps \"Today was different,\" picks \"More oil,\" and sees exactly what changes: 120 more for the whole pan, 30 more on her plate. She chooses \"Just this time.\" But Ladle notices it's the second time, and asks: \"You usually brush on more oil. Update your recipe?\" One tap, and Ladle remembers.",
     caption: { text: "Fixes stick", at: "Ladle notices" },
